@@ -61,8 +61,9 @@ def test_game_settings_default_to_board_view_and_allow_blindfold_toggle():
 def test_text_only_renderer_displays_moves_without_chessboard_symbols():
     from io import StringIO
     from rich.console import Console
-    from terchess.board_view import render_text_position
+    from terchess.board_view import move_history, render_text_position
     from terchess.clock import ChessClock
+
     output = StringIO()
     console = Console(file=output, record=True, force_terminal=False, width=100)
     board = chess.Board()
@@ -70,10 +71,14 @@ def test_text_only_renderer_displays_moves_without_chessboard_symbols():
     board.push_san("e5")
     clock = ChessClock(300, 0, now=lambda: 0.0)
     clock.start(chess.WHITE)
+
     render_text_position(console, board, chess.WHITE, 10, clock, "5+0", "Stockfish played e5")
     rendered = console.export_text()
+
     assert "BLINDFOLD MODE" in rendered
-    assert "1." in rendered
+    # The renderer uses a separate move-number column; text history uses SAN notation.
+    assert move_history(board) == "1. e4 e5"
+    assert "Move history" in rendered
     assert "e4" in rendered and "e5" in rendered
-    for piece in "♔♕♖♗♘♙♚♛♜♝♞♟":
+    for piece in "♔♕♖♗♘♙♚♛♜♞♟":
         assert piece not in rendered

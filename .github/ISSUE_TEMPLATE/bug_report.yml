@@ -1,0 +1,55 @@
+name: Bug report
+description: Report a reproducible problem with Terchess
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "Thanks for helping improve Terchess. Please do not include passwords, tokens, or private information."
+  - type: input
+    id: version
+    attributes:
+      label: Terchess version
+      placeholder: "e.g. 1.0.0-rc1 or commit SHA"
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system and version
+      placeholder: "e.g. Windows 11, Kali Linux"
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "e.g. Python 3.13"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Number the steps needed to reproduce the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant error output
+      description: Remove personal paths, tokens, and sensitive data before posting.
+    validations:
+      required: false

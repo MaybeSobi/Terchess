@@ -82,20 +82,33 @@ Terchess is a **Python terminal application**, not a standalone Windows `.exe`. 
 
 ### 1. Download and extract the ZIP
 
-Download **[Terchess-1.0.1.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.0.1/Terchess-1.0.1.zip)** from the [stable v1.0.1 release](https://github.com/MaybeSobi/Terchess/releases/tag/v1.0.1), then extract it.
+Download **[Terchess-1.0.2.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.0.2/Terchess-1.0.2.zip)** from the [stable v1.0.2 release](https://github.com/MaybeSobi/Terchess/releases/tag/v1.0.2), then extract it.
 
 - **Windows:** In File Explorer, right-click the ZIP and choose **Extract All…**.
 - **macOS:** Double-click the ZIP in Finder; macOS extracts the folder beside it.
 - **Kali/Linux:** You can extract the ZIP with your file manager, or install and use `unzip` as shown below.
 
-After extraction, you should have a folder named `Terchess-1.0.1`. Open a terminal **inside that folder**. The project root is the folder containing `pyproject.toml` and the `src` directory. The `cd` examples below assume you extracted it into Downloads; adjust the path if you chose another location.
+After extraction, you should have a folder named `Terchess-1.0.2`. Open a terminal **inside that folder**. The project root is the folder containing `pyproject.toml` and the `src` directory. The `cd` examples below assume you extracted it into Downloads; adjust the path if you chose another location.
+
+### Quick launch — recommended
+
+After extracting the ZIP, you can launch Terchess with the script for your operating system. **You only need to double-click the launcher after Python is installed.** On the first launch, it creates a local `.venv` folder and installs Terchess's Python dependencies automatically. Later launches reuse that environment and start the game directly.
+
+- **Windows:** double-click `run_terchess.bat`.
+- **macOS:** double-click `run_terchess.command`; it opens Terminal and runs Terchess.
+- **Kali/Linux:** double-click `run_terchess.sh`. If your file manager opens it as text instead, right-click and choose **Run in Terminal** or **Run as Program**. You can also launch it from a terminal with `./run_terchess.sh`.
+
+Before using a launcher, install **Python 3.10 or newer**. On Kali/Debian/Ubuntu, ensure `python3-venv` is installed; the manual setup below lists the required system packages. The first launch needs an internet connection to download Python dependencies.
+
+**Stockfish is still a separate one-time install.** The launcher does not install or bundle the chess engine. Install Stockfish for your operating system and select its executable in Terchess when asked. See the operating-system instructions below for the recommended method. If setup fails, the launcher leaves an error message in the terminal window.
+
 
 ### 2. Windows — PowerShell
 
 First, open PowerShell and move into the extracted project folder:
 
 ```powershell
-cd "$HOME\Downloads\Terchess-1.0.1"
+cd "$HOME\Downloads\Terchess-1.0.2"
 Get-ChildItem pyproject.toml
 ```
 
@@ -116,7 +129,7 @@ The first install downloads the libraries listed by the project automatically. Y
 **If PowerShell blocks activation:** open Command Prompt (CMD) and run these commands instead. The first path assumes the project is in your Downloads folder:
 
 ```bat
-cd /d "%USERPROFILE%\Downloads\Terchess-1.0.1"
+cd /d "%USERPROFILE%\Downloads\Terchess-1.0.2"
 py -3 -m venv .venv
 .venv\Scripts\activate.bat
 python -m pip install --upgrade pip
@@ -163,10 +176,10 @@ The `[dev]` extra installs `pytest`; it is not required just to play.
 
 #### Download, extract, and enter the project directory
 
-Download [Terchess-1.0.1.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.0.1/Terchess-1.0.1.zip) from the [stable release page](https://github.com/MaybeSobi/Terchess/releases/tag/v1.0.1). In Finder, double-click the ZIP to extract it. If you saved it to Downloads, open Terminal and enter the extracted project folder:
+Download [Terchess-1.0.2.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.0.2/Terchess-1.0.2.zip) from the [stable release page](https://github.com/MaybeSobi/Terchess/releases/tag/v1.0.2). In Finder, double-click the ZIP to extract it. If you saved it to Downloads, open Terminal and enter the extracted project folder:
 
 ```bash
-cd "$HOME/Downloads/Terchess-1.0.1"
+cd "$HOME/Downloads/Terchess-1.0.2"
 ls pyproject.toml
 ```
 
@@ -196,7 +209,7 @@ python -m pytest -q
 When you open a new Terminal window later, return to the project directory and reactivate the environment:
 
 ```bash
-cd "$HOME/Downloads/Terchess-1.0.1"
+cd "$HOME/Downloads/Terchess-1.0.2"
 source .venv/bin/activate
 terchess
 ```
@@ -210,12 +223,12 @@ sudo apt update
 sudo apt install -y python3-full python3-venv python3-pip unzip stockfish
 ```
 
-Download `Terchess-1.0.1.zip` from the [releases page](https://github.com/MaybeSobi/Terchess/releases), then extract it. For a ZIP saved in Downloads, these commands make a Projects folder, extract the archive, and enter the project root:
+Download `Terchess-1.0.2.zip` from the [releases page](https://github.com/MaybeSobi/Terchess/releases), then extract it. For a ZIP saved in Downloads, these commands make a Projects folder, extract the archive, and enter the project root:
 
 ```bash
 mkdir -p ~/Projects
-unzip ~/Downloads/Terchess-1.0.1.zip -d ~/Projects
-cd ~/Projects/Terchess-1.0.1
+unzip ~/Downloads/Terchess-1.0.2.zip -d ~/Projects
+cd ~/Projects/Terchess-1.0.2
 ls
 ```
 
@@ -292,9 +305,13 @@ With the virtual environment active, run:
 python -m pytest
 ```
 
-The stable `v1.0.1` release adds macOS installation guidance and automated CI coverage. GitHub Actions tests Python 3.10–3.13 on Windows, macOS, and Ubuntu. The [release checklist](RELEASE_CHECKLIST.md) remains useful when testing future changes.
+The stable `v1.0.2` release includes one-click launch scripts for Windows, macOS, and Linux. GitHub Actions tests Python 3.10–3.13 on all three operating systems. The [release checklist](RELEASE_CHECKLIST.md) remains useful when testing future changes.
 
 ## Roadmap
+
+### `1.0.2` — One-click launchers · **Released 2026-10-16**
+
+Add launch scripts for Windows, macOS, and Linux that create a private Python environment and install application dependencies on first run.
 
 ### `1.0.1` — macOS support · **Released 2026-10-16**
 

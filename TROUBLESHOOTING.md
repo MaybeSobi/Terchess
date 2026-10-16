@@ -6,9 +6,9 @@ Most commands must be run from the extracted Terchess folder: the folder contain
 
 For example, if you extracted the ZIP into Downloads:
 
-- Windows PowerShell: `cd "$HOME\Downloads\Terchess-1.0.1"`
-- Kali/Linux: `cd ~/Projects/Terchess-1.0.1` (use the path where you extracted it)
-- macOS Terminal: `cd "$HOME/Downloads/Terchess-1.0.1"` (adjust for your chosen location)
+- Windows PowerShell: `cd "$HOME\Downloads\Terchess-1.0.2"`
+- Kali/Linux: `cd ~/Projects/Terchess-1.0.2` (use the path where you extracted it)
+- macOS Terminal: `cd "$HOME/Downloads/Terchess-1.0.2"` (adjust for your chosen location)
 
 If `pyproject.toml` is not in the current directory, use `cd` to enter the correct folder before creating the environment or installing the project.
 
@@ -82,3 +82,14 @@ python -m pytest -q
 ## Unicode pieces or colors render incorrectly
 
 Use a terminal with Unicode support and a font containing chess-piece glyphs. If glyphs remain unsupported, use Blindfold / text-only mode.
+
+
+## One-click launcher cannot start
+
+- **Windows:** double-click `run_terchess.bat`. If the message says Python is missing or too old, install Python 3.10 or newer and retry.
+- **macOS:** double-click `run_terchess.command`. If needed, open Terminal in the project folder and run `./run_terchess.command`.
+- **Kali/Linux:** make sure `python3-full` and `python3-venv` are installed, then run `./run_terchess.sh` from the project folder. If the file is not executable, run `chmod +x run_terchess.sh` once and retry.
+- All platforms need internet access on the first launch so pip can install the project's Python dependencies.
+- Stockfish is separate from Terchess. Install it for your OS and select its executable in the game if it is not detected automatically.
+
+The launcher stores the Python environment in `.venv/` next to the project. Keep that folder with the extracted project; if you move or re-extract the project to a new directory, run the launcher again to create a fresh environment.

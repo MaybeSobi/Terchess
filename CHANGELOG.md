@@ -2,6 +2,14 @@
 
 All notable changes to Terchess are documented here.
 
+## [1.0.2] — 2026-10-16
+
+- Add one-click launch scripts for Windows, macOS, and Linux.
+- Create a project-local Python virtual environment automatically on first launch.
+- Install Terchess and its Python dependencies on first launch, then reuse the environment on later runs.
+- Add Unix shell syntax validation to CI.
+- Expand documentation for launchers, first-run setup, and troubleshooting.
+
 ## [1.0.1] — 2026-10-16
 
 - Add full macOS installation instructions for Terminal, Python virtual environments, dependencies, and Stockfish.

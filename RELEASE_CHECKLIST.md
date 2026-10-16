@@ -11,8 +11,9 @@ Reusable checklist for future releases. Verify each relevant item against the ex
 ## Manual checks
 
 - [ ] Fresh installation works on Windows.
-- [ ] Fresh installation works on macOS (Apple Silicon and/or Intel, as available).
-- [ ] Fresh installation works on a Linux distribution.
+- [ ] One-click `run_terchess.bat` creates the environment and starts the game on Windows.
+- [ ] Fresh installation and one-click launch work on macOS (Apple Silicon and/or Intel, as available).
+- [ ] Fresh installation and one-click launch work on a Linux distribution.
 - [ ] Stockfish discovery and manual executable-path selection work.
 - [ ] Legal move entry accepts SAN and coordinate notation.
 - [ ] Illegal moves are rejected without corrupting the game.
@@ -47,3 +48,10 @@ The checklist above is retained as a practical template for future releases; the
 - The CI matrix tests Python 3.10–3.13 on macOS as well as Windows and Ubuntu.
 - README includes steps for installing Python and Stockfish, extracting the ZIP, entering the project directory, creating a virtual environment, installing dependencies, and launching Terchess.
 - Manual testing on a physical Mac is recommended when available.
+
+
+## v1.0.2 launcher verification
+
+- CI checks POSIX shell syntax for `run_terchess.sh` and `run_terchess.command` on Linux and macOS runners.
+- Launchers create `.venv` and install project dependencies when required.
+- Manual launch testing on physical Windows, macOS, and Linux systems is recommended when available.

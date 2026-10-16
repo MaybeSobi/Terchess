@@ -43,3 +43,31 @@ jobs:
             --target "$RELEASE_SHA" \
             --prerelease \
             --notes "First Terchess release candidate. This is pre-release software: please test installation, Stockfish discovery, both display modes, clock behavior, and settings persistence before considering a stable 1.0.0 release. Stockfish must be installed separately."
+
+  attach_zip:
+    if: >-
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      contains(github.event.workflow_run.head_commit.message, '[attach-zip]')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out the exact source of the existing release
+        uses: actions/checkout@v4
+        with:
+          ref: v1.0.0-rc1
+      - name: Build one cross-platform source ZIP
+        run: |
+          mkdir -p package/Terchess-1.0.0-rc1
+          git archive HEAD | tar -x -C package/Terchess-1.0.0-rc1
+          cd package
+          zip -r ../Terchess-1.0.0-rc1.zip Terchess-1.0.0-rc1
+      - name: Upload ZIP to the existing GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload v1.0.0-rc1 Terchess-1.0.0-rc1.zip \
+            --repo "$GITHUB_REPOSITORY" \
+            --clobber

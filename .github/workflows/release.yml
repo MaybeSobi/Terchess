@@ -20,54 +20,42 @@ jobs:
       contents: write
     steps:
       - name: Check out the exact commit tested by CI
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - name: Build source and wheel distributions
+      - name: Build and validate Python distributions
         run: |
           python -m pip install --upgrade build twine
           python -m build
           python -m twine check dist/*
-      - name: Publish GitHub prerelease
+      - name: Build the cross-platform source ZIP
+        run: |
+          RAW_VERSION="$(python - <<'PY'
+          import tomllib
+          with open("pyproject.toml", "rb") as f:
+              print(tomllib.load(f)["project"]["version"])
+          PY
+          )"
+          VERSION="${RAW_VERSION/rc/-rc}"
+          TAG="v${VERSION}"
+          ZIP_NAME="Terchess-${VERSION}.zip"
+          mkdir -p "zip-root/Terchess-${VERSION}"
+          git archive HEAD | tar -x -C "zip-root/Terchess-${VERSION}"
+          (cd zip-root && zip -qr "../${ZIP_NAME}" "Terchess-${VERSION}")
+          echo "RELEASE_TAG=${TAG}" >> "$GITHUB_ENV"
+          echo "ZIP_NAME=${ZIP_NAME}" >> "$GITHUB_ENV"
+      - name: Publish GitHub prerelease with ZIP and Python distributions
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
-          gh release create v1.0.0-rc1 dist/* \
+          gh release create "$RELEASE_TAG" dist/* "$ZIP_NAME" \
             --repo "$GITHUB_REPOSITORY" \
-            --title "Terchess v1.0.0-rc1" \
+            --title "Terchess $RELEASE_TAG" \
             --target "$RELEASE_SHA" \
             --prerelease \
-            --notes "First Terchess release candidate. This is pre-release software: please test installation, Stockfish discovery, both display modes, clock behavior, and settings persistence before considering a stable 1.0.0 release. Stockfish must be installed separately."
-
-  attach_zip:
-    if: >-
-      github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.head_branch == 'main' &&
-      contains(github.event.workflow_run.head_commit.message, '[attach-zip]')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Check out the exact source of the existing release
-        uses: actions/checkout@v4
-        with:
-          ref: v1.0.0-rc1
-      - name: Build one cross-platform source ZIP
-        run: |
-          mkdir -p package/Terchess-1.0.0-rc1
-          git archive HEAD | tar -x -C package/Terchess-1.0.0-rc1
-          cd package
-          zip -r ../Terchess-1.0.0-rc1.zip Terchess-1.0.0-rc1
-      - name: Upload ZIP to the existing GitHub release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release upload v1.0.0-rc1 Terchess-1.0.0-rc1.zip \
-            --repo "$GITHUB_REPOSITORY" \
-            --clobber
+            --notes "Terchess $RELEASE_TAG is a release candidate. For most users, download the cross-platform Terchess ZIP, extract it, and follow the Windows or Kali/Linux instructions in README.md. The Python wheel and source archive are optional packaging formats. Stockfish must be installed separately."

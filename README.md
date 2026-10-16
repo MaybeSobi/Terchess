@@ -72,44 +72,113 @@ Download Stockfish from the [official Stockfish website](https://stockfishchess.
 
 ## Installation
 
-### Windows — PowerShell
+Terchess is a **Python terminal application**, not a standalone Windows `.exe`. The same source ZIP works on Windows and Linux. You extract it, install its Python dependencies into a virtual environment, and run it from a terminal.
+
+### What you need first
+
+1. **Python 3.10 or newer.** Download it from [python.org](https://www.python.org/downloads/). On Windows, install the Python launcher (`py`) if offered, and enable the option to add Python to PATH when the installer offers it.
+2. **Stockfish**, installed separately. Terchess does not include the Stockfish engine itself. Download a build for your operating system from the [official Stockfish download page](https://stockfishchess.org/download/).
+3. **Internet access for the initial Python dependency installation.** The dependencies are installed by the commands below; you do not need to download `python-chess`, `rich`, or `prompt-toolkit` manually.
+
+### 1. Download and extract the ZIP
+
+Open the [Terchess releases page](https://github.com/MaybeSobi/Terchess/releases). Download **`Terchess-1.0.0-rc2.zip`** from the `v1.0.0-rc2` release, then extract it.
+
+- **Windows:** In File Explorer, right-click the ZIP and choose **Extract All…**.
+- **Kali/Linux:** You can extract the ZIP with your file manager, or install and use `unzip` as shown below.
+
+After extraction, you should have a folder named `Terchess-1.0.0-rc2`. Open a terminal **inside that folder**. The project root is the folder containing `pyproject.toml` and the `src` directory. The `cd` examples below assume you extracted it into Downloads; adjust the path if you chose another location.
+
+### 2. Windows — PowerShell
+
+First, open PowerShell and move into the extracted project folder:
 
 ```powershell
-py -m venv .venv
+cd "$HOME\Downloads\Terchess-1.0.0-rc2"
+Get-ChildItem pyproject.toml
+```
+
+The second command should show `pyproject.toml`. If it says the file cannot be found, you are not in the project root; correct the `cd` path before continuing.
+
+Create a virtual environment, activate it, update pip, install Terchess and its required libraries, then launch the game:
+
+```powershell
+py -3 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-python -m pip install -e ".[dev]"
+python -m pip install .
 terchess
 ```
 
-If PowerShell blocks script activation, use Command Prompt instead:
+The first install downloads the libraries listed by the project automatically. You do **not** need to install each Python dependency one by one.
+
+**If PowerShell blocks activation:** open Command Prompt (CMD) and run these commands instead. The first path assumes the project is in your Downloads folder:
 
 ```bat
+cd /d "%USERPROFILE%\Downloads\Terchess-1.0.0-rc2"
+py -3 -m venv .venv
 .venv\Scripts\activate.bat
-python -m pip install -e ".[dev]"
+python -m pip install --upgrade pip
+python -m pip install .
 terchess
 ```
 
-### Linux (including Kali Linux)
+**Optional — development and tests:** If you want to edit Terchess or run its tests, use the development install instead of the normal install command above:
 
-Install virtual-environment support first:
+```powershell
+python -m pip install -e ".[dev]"
+python -m pytest -q
+```
+
+The `[dev]` extra installs `pytest`; it is not required just to play.
+
+### 3. Kali Linux / Debian / Ubuntu
+
+Open a terminal. Install Python's virtual-environment tools and the Stockfish engine from your distribution's package manager:
 
 ```bash
 sudo apt update
-sudo apt install -y python3-full python3-venv python3-pip
+sudo apt install -y python3-full python3-venv python3-pip unzip stockfish
 ```
 
-From the extracted project directory:
+Download `Terchess-1.0.0-rc2.zip` from the [releases page](https://github.com/MaybeSobi/Terchess/releases), then extract it. For a ZIP saved in Downloads, these commands make a Projects folder, extract the archive, and enter the project root:
+
+```bash
+mkdir -p ~/Projects
+unzip ~/Downloads/Terchess-1.0.0-rc2.zip -d ~/Projects
+cd ~/Projects/Terchess-1.0.0-rc2
+ls
+```
+
+Check that the listing includes `pyproject.toml` and `src`. Then create and activate a virtual environment, install the project, and launch it:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install -e ".[dev]"
+python -m pip install .
 terchess
 ```
 
-> **Kali/Linux note:** Bash uses `python3 -m venv` and `source .venv/bin/activate`. Commands like `py -3.13` and `.\.venv\Scripts\Activate.ps1` are for Windows, not Linux. Install packages inside the virtual environment; do not use `--break-system-packages`.
+If you extracted the ZIP somewhere else, change the `cd` path to that folder. If your Kali/Debian repositories cannot find the `stockfish` package, install a Linux build from the [official Stockfish download page](https://stockfishchess.org/download/) and select its executable in Terchess.
+
+**Optional — development and tests:** From the project root with the virtual environment active:
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pytest -q
+```
+
+Do not use `sudo pip` or `--break-system-packages`. Keep the project's Python packages inside its `.venv` environment.
+
+### 4. Stockfish on first launch
+
+Terchess needs the Stockfish **engine executable** to play against the computer. Installing Terchess's Python libraries does not install Stockfish.
+
+- **Windows:** Download and extract Stockfish, then choose or enter the full path to its `.exe` when Terchess asks for the engine. The exact filename depends on the build you downloaded.
+- **Kali/Linux:** The package-manager install above usually makes the executable available as `stockfish`. If Terchess does not detect it, choose its path or provide the executable path in Terchess settings.
+
+After installation, keep the `.venv` folder with the project. When opening a new terminal later, `cd` back into the project folder, activate the virtual environment (` .\.venv\Scripts\Activate.ps1` on PowerShell or `source .venv/bin/activate` on Linux), and run `terchess` again.
 
 ## First launch
 

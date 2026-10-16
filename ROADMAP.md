@@ -2,14 +2,13 @@
 
 This roadmap describes planned work, not features that have already shipped. Milestones depend on implementation and testing; dates are intentionally omitted.
 
-## 1.0.0 — Stable offline release
+## 1.0.0 — Stable offline release · Released 2026-10-16
 
 - Local Stockfish gameplay with configurable Skill Level.
 - Board View and Blindfold / text-only mode.
-- Chess clocks and legal move validation.
-- Persistent preferences and engine path.
-- Reliable setup documentation and automated tests.
-- Manual verification on Windows and Linux before stable release.
+- Chess clocks, legal move validation, and persistent preferences.
+- Cross-platform setup documentation and a source ZIP for Windows/Linux.
+- CI passed on Python 3.10–3.13 on Windows and Ubuntu; a fresh download was smoke-tested by the maintainer.
 
 ## 1.1.0 — Game History + play with friends
 

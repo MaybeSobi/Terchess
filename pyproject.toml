@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "terchess"
-version = "1.0.0rc2"
+version = "1.0.0"
 description = "Terminal chess against a local Stockfish engine, with board and blindfold modes"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -12,7 +12,7 @@ license = "GPL-3.0-or-later"
 authors = [{ name = "MaybeSobi" }]
 keywords = ["chess", "terminal", "stockfish", "cli", "blindfold-chess"]
 classifiers = [
-  "Development Status :: 4 - Beta",
+  "Development Status :: 5 - Production/Stable",
   "Environment :: Console",
   "Intended Audience :: End Users/Desktop",
   "Operating System :: Microsoft :: Windows",

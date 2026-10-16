@@ -6,8 +6,8 @@ Most commands must be run from the extracted Terchess folder: the folder contain
 
 For example, if you extracted the ZIP into Downloads:
 
-- Windows PowerShell: `cd "$HOME\Downloads\Terchess-1.0.0-rc2"`
-- Kali/Linux: `cd ~/Projects/Terchess-1.0.0-rc2` (use the path where you extracted it)
+- Windows PowerShell: `cd "$HOME\Downloads\Terchess-1.0.0"`
+- Kali/Linux: `cd ~/Projects/Terchess-1.0.0` (use the path where you extracted it)
 
 If `pyproject.toml` is not in the current directory, use `cd` to enter the correct folder before creating the environment or installing the project.
 

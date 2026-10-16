@@ -1,4 +1,4 @@
-name: Publish release candidate
+name: Publish release
 
 on:
   workflow_run:
@@ -14,7 +14,8 @@ jobs:
       github.event.workflow_run.event == 'push' &&
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.head_branch == 'main' &&
-      contains(github.event.workflow_run.head_commit.message, '[publish-rc]')
+      (contains(github.event.workflow_run.head_commit.message, '[publish-release]') ||
+       contains(github.event.workflow_run.head_commit.message, '[publish-rc]'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -41,21 +42,33 @@ jobs:
           PY
           )"
           VERSION="${RAW_VERSION/rc/-rc}"
-          TAG="v${VERSION}"
+          RELEASE_TAG="v${VERSION}"
           ZIP_NAME="Terchess-${VERSION}.zip"
           mkdir -p "zip-root/Terchess-${VERSION}"
           git archive HEAD | tar -x -C "zip-root/Terchess-${VERSION}"
           (cd zip-root && zip -qr "../${ZIP_NAME}" "Terchess-${VERSION}")
-          echo "RELEASE_TAG=${TAG}" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=${RELEASE_TAG}" >> "$GITHUB_ENV"
           echo "ZIP_NAME=${ZIP_NAME}" >> "$GITHUB_ENV"
-      - name: Publish GitHub prerelease with ZIP and Python distributions
+          if [[ "${VERSION}" == *-rc* ]]; then
+            echo "IS_PRERELEASE=true" >> "$GITHUB_ENV"
+          else
+            echo "IS_PRERELEASE=false" >> "$GITHUB_ENV"
+          fi
+      - name: Publish the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
+          if [[ "$IS_PRERELEASE" == "true" ]]; then
+            RELEASE_NOTES="Terchess $RELEASE_TAG is a release candidate. Download the cross-platform ZIP, extract it, and follow the Windows or Kali/Linux instructions in README.md. Stockfish must be installed separately."
+            PRERELEASE_ARGS=(--prerelease)
+          else
+            RELEASE_NOTES="Terchess $RELEASE_TAG is the first stable release. For most users, download Terchess-1.0.0.zip, extract it, and follow the step-by-step Windows or Kali/Linux instructions in README.md. Stockfish must be installed separately."
+            PRERELEASE_ARGS=()
+          fi
           gh release create "$RELEASE_TAG" dist/* "$ZIP_NAME" \
             --repo "$GITHUB_REPOSITORY" \
             --title "Terchess $RELEASE_TAG" \
             --target "$RELEASE_SHA" \
-            --prerelease \
-            --notes "Terchess $RELEASE_TAG is a release candidate. For most users, download the cross-platform Terchess ZIP, extract it, and follow the Windows or Kali/Linux instructions in README.md. The Python wheel and source archive are optional packaging formats. Stockfish must be installed separately."
+            --notes "$RELEASE_NOTES" \
+            "${PRERELEASE_ARGS[@]}"

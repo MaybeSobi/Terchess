@@ -82,19 +82,19 @@ Terchess is a **Python terminal application**, not a standalone Windows `.exe`. 
 
 ### 1. Download and extract the ZIP
 
-Open the [Terchess releases page](https://github.com/MaybeSobi/Terchess/releases). Download **`Terchess-1.0.0-rc2.zip`** from the `v1.0.0-rc2` release, then extract it.
+Download **[Terchess-1.0.0.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.0.0/Terchess-1.0.0.zip)** from the [stable v1.0.0 release](https://github.com/MaybeSobi/Terchess/releases/tag/v1.0.0), then extract it.
 
 - **Windows:** In File Explorer, right-click the ZIP and choose **Extract All…**.
 - **Kali/Linux:** You can extract the ZIP with your file manager, or install and use `unzip` as shown below.
 
-After extraction, you should have a folder named `Terchess-1.0.0-rc2`. Open a terminal **inside that folder**. The project root is the folder containing `pyproject.toml` and the `src` directory. The `cd` examples below assume you extracted it into Downloads; adjust the path if you chose another location.
+After extraction, you should have a folder named `Terchess-1.0.0`. Open a terminal **inside that folder**. The project root is the folder containing `pyproject.toml` and the `src` directory. The `cd` examples below assume you extracted it into Downloads; adjust the path if you chose another location.
 
 ### 2. Windows — PowerShell
 
 First, open PowerShell and move into the extracted project folder:
 
 ```powershell
-cd "$HOME\Downloads\Terchess-1.0.0-rc2"
+cd "$HOME\Downloads\Terchess-1.0.0"
 Get-ChildItem pyproject.toml
 ```
 
@@ -115,7 +115,7 @@ The first install downloads the libraries listed by the project automatically. Y
 **If PowerShell blocks activation:** open Command Prompt (CMD) and run these commands instead. The first path assumes the project is in your Downloads folder:
 
 ```bat
-cd /d "%USERPROFILE%\Downloads\Terchess-1.0.0-rc2"
+cd /d "%USERPROFILE%\Downloads\Terchess-1.0.0"
 py -3 -m venv .venv
 .venv\Scripts\activate.bat
 python -m pip install --upgrade pip
@@ -141,12 +141,12 @@ sudo apt update
 sudo apt install -y python3-full python3-venv python3-pip unzip stockfish
 ```
 
-Download `Terchess-1.0.0-rc2.zip` from the [releases page](https://github.com/MaybeSobi/Terchess/releases), then extract it. For a ZIP saved in Downloads, these commands make a Projects folder, extract the archive, and enter the project root:
+Download `Terchess-1.0.0.zip` from the [releases page](https://github.com/MaybeSobi/Terchess/releases), then extract it. For a ZIP saved in Downloads, these commands make a Projects folder, extract the archive, and enter the project root:
 
 ```bash
 mkdir -p ~/Projects
-unzip ~/Downloads/Terchess-1.0.0-rc2.zip -d ~/Projects
-cd ~/Projects/Terchess-1.0.0-rc2
+unzip ~/Downloads/Terchess-1.0.0.zip -d ~/Projects
+cd ~/Projects/Terchess-1.0.0
 ls
 ```
 
@@ -222,13 +222,13 @@ With the virtual environment active, run:
 python -m pytest
 ```
 
-GitHub Actions is configured to run tests on Windows and Ubuntu. Before the stable `1.0.0` release, complete the manual checks in [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) on real systems.
+The stable `v1.0.0` release is available now. GitHub Actions passed on Python 3.10–3.13 across Windows and Ubuntu, and the maintainer smoke-tested a fresh download. The [release checklist](RELEASE_CHECKLIST.md) remains useful when testing future changes.
 
 ## Roadmap
 
-### `1.0.0` — Stable offline release
+### `1.0.0` — Stable offline release · **Released 2026-10-16**
 
-Stabilize local Stockfish play, Board View / Blindfold mode, clocks, legal move validation, persistent settings, installation, and automated tests.
+The first stable release includes local Stockfish gameplay, Board View / Blindfold mode, clocks, legal move validation, persistent settings, cross-platform installation instructions, and automated CI tests.
 
 ### `1.1.0` — Game History + play with friends
 

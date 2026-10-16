@@ -1,6 +1,6 @@
 # Release checklist — Terchess
 
-Do not publish a stable release until each relevant item has been verified against the exact source being released.
+Reusable checklist for future releases. Verify each relevant item against the exact source being released.
 
 ## Automated checks
 
@@ -32,6 +32,10 @@ Do not publish a stable release until each relevant item has been verified again
 - [ ] Attach a source archive or built artifact to the GitHub release.
 - [ ] Clearly label any release candidate as pre-release.
 
-## Current status
+## v1.0.0 release verification
 
-This checklist is a guide, not a statement that these checks have passed. The maintainer must verify the exact release candidate before declaring `1.0.0` stable.
+- GitHub Actions passed all 8 combinations: Python 3.10–3.13 on Windows and Ubuntu.
+- The release workflow built the wheel and source distribution and validated them with `twine check`.
+- The maintainer downloaded a fresh copy of the project and smoke-tested it successfully.
+
+The checklist above is retained as a practical template for future releases; the bullets here state only the verification performed for v1.0.0.

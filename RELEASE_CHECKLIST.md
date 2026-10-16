@@ -11,6 +11,7 @@ Reusable checklist for future releases. Verify each relevant item against the ex
 ## Manual checks
 
 - [ ] Fresh installation works on Windows.
+- [ ] Fresh installation works on macOS (Apple Silicon and/or Intel, as available).
 - [ ] Fresh installation works on a Linux distribution.
 - [ ] Stockfish discovery and manual executable-path selection work.
 - [ ] Legal move entry accepts SAN and coordinate notation.
@@ -39,3 +40,10 @@ Reusable checklist for future releases. Verify each relevant item against the ex
 - The maintainer downloaded a fresh copy of the project and smoke-tested it successfully.
 
 The checklist above is retained as a practical template for future releases; the bullets here state only the verification performed for v1.0.0.
+
+
+## v1.0.1 macOS support
+
+- The CI matrix tests Python 3.10–3.13 on macOS as well as Windows and Ubuntu.
+- README includes steps for installing Python and Stockfish, extracting the ZIP, entering the project directory, creating a virtual environment, installing dependencies, and launching Terchess.
+- Manual testing on a physical Mac is recommended when available.

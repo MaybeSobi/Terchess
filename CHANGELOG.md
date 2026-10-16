@@ -2,6 +2,13 @@
 
 All notable changes to Terchess are documented here.
 
+## [1.0.1] — 2026-10-16
+
+- Add full macOS installation instructions for Terminal, Python virtual environments, dependencies, and Stockfish.
+- Document Homebrew and official Stockfish-download options.
+- Add macOS to GitHub Actions CI for Python 3.10–3.13.
+- Declare macOS support in the package metadata and release notes.
+
 ## [1.0.0] — 2026-10-16
 
 - **First stable release** of Terchess.

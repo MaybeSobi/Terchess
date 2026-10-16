@@ -6,8 +6,9 @@ Most commands must be run from the extracted Terchess folder: the folder contain
 
 For example, if you extracted the ZIP into Downloads:
 
-- Windows PowerShell: `cd "$HOME\Downloads\Terchess-1.0.0"`
-- Kali/Linux: `cd ~/Projects/Terchess-1.0.0` (use the path where you extracted it)
+- Windows PowerShell: `cd "$HOME\Downloads\Terchess-1.0.1"`
+- Kali/Linux: `cd ~/Projects/Terchess-1.0.1` (use the path where you extracted it)
+- macOS Terminal: `cd "$HOME/Downloads/Terchess-1.0.1"` (adjust for your chosen location)
 
 If `pyproject.toml` is not in the current directory, use `cd` to enter the correct folder before creating the environment or installing the project.
 
@@ -15,7 +16,7 @@ For full first-time setup—including downloading/extracting the ZIP, installing
 
 ## `py` or `python3` is not recognized
 
-Install Python 3.10 or newer from [python.org](https://www.python.org/downloads/). On Windows, try `py --version`; on Kali/Linux, try `python3 --version`. Reopen the terminal after installing Python.
+Install Python 3.10 or newer from [python.org](https://www.python.org/downloads/). On Windows, try `py --version`; on macOS/Linux, try `python3 --version`. Reopen the terminal after installing Python.
 
 ## Virtual environment activation fails on Windows
 
@@ -67,6 +68,7 @@ Stockfish is a separate executable and is not bundled in the Terchess ZIP.
 
 - **Kali/Linux:** try `sudo apt install stockfish`, then check `command -v stockfish`.
 - **Windows:** download and extract Stockfish from the [official website](https://stockfishchess.org/download/), then enter or select the full path to its `.exe` in Terchess.
+- **macOS:** if Homebrew is available for your Mac, run `brew install stockfish` and check with `command -v stockfish`. Otherwise download the macOS build from the [official website](https://stockfishchess.org/download/) and select its executable in Terchess.
 
 ## Tests cannot import `terchess`, `chess`, or other dependencies
 

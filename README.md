@@ -214,7 +214,7 @@ source .venv/bin/activate
 terchess
 ```
 
-### 4. Kali Linux / Debian / Ubuntu
+### 4. Linux / Debian / Ubuntu
 
 Open a terminal. Install Python's virtual-environment tools and the Stockfish engine from your distribution's package manager:
 

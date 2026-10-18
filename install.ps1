@@ -5,14 +5,17 @@ function Write-Info($Message) { Write-Host "[Terchess] $Message" -ForegroundColo
 function Write-Warn($Message) { Write-Host "[Terchess] $Message" -ForegroundColor Yellow }
 
 function Get-PythonCommand {
-    foreach ($candidate in @(@("py", "-3"), @("python", ""))) {
-        $cmd = $candidate[0]
-        if (Get-Command $cmd -ErrorAction SilentlyContinue) {
-            try {
-                & $cmd $candidate[1] -c "import sys; raise SystemExit(0 if sys.version_info >= (3,10) else 1)" 2>$null
-                if ($LASTEXITCODE -eq 0) { return $candidate }
-            } catch {}
-        }
+    if (Get-Command py -ErrorAction SilentlyContinue) {
+        try {
+            & py -3 -c "import sys; raise SystemExit(0 if sys.version_info >= (3,10) else 1)" 2>$null
+            if ($LASTEXITCODE -eq 0) { return "py" }
+        } catch {}
+    }
+    if (Get-Command python -ErrorAction SilentlyContinue) {
+        try {
+            & python -c "import sys; raise SystemExit(0 if sys.version_info >= (3,10) else 1)" 2>$null
+            if ($LASTEXITCODE -eq 0) { return "python" }
+        } catch {}
     }
     return $null
 }

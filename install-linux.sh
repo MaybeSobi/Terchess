@@ -24,13 +24,17 @@ install_packages() {
 info "Checking system packages..."
 if command -v apt-get >/dev/null 2>&1; then
   install_packages apt-get update
-  install_packages apt-get install -y python3 python3-venv python3-pip curl unzip stockfish
+  install_packages apt-get install -y python3 python3-venv python3-pip curl unzip
+  install_packages apt-get install -y stockfish || warn "Stockfish could not be installed from APT; it can be installed separately."
 elif command -v dnf >/dev/null 2>&1; then
-  install_packages dnf install -y python3 python3-pip curl unzip stockfish
+  install_packages dnf install -y python3 python3-pip curl unzip
+  install_packages dnf install -y stockfish || warn "Stockfish could not be installed from DNF; it can be installed separately."
 elif command -v pacman >/dev/null 2>&1; then
-  install_packages pacman -S --needed --noconfirm python python-pip curl unzip stockfish
+  install_packages pacman -S --needed --noconfirm python python-pip curl unzip
+  install_packages pacman -S --needed --noconfirm stockfish || warn "Stockfish could not be installed from pacman; it can be installed separately."
 elif command -v zypper >/dev/null 2>&1; then
-  install_packages zypper --non-interactive install python3 python3-pip curl unzip stockfish
+  install_packages zypper --non-interactive install python3 python3-pip curl unzip
+  install_packages zypper --non-interactive install stockfish || warn "Stockfish could not be installed from zypper; it can be installed separately."
 else
   echo "Unsupported package manager. Install Python 3.10+, curl, unzip, and Stockfish manually."
   echo "Python: https://www.python.org/downloads/"

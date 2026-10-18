@@ -72,6 +72,34 @@ Download Stockfish from the [official Stockfish website](https://stockfishchess.
 
 ## Installation
 
+## One-command installation (recommended)
+
+Run the command for your operating system. The installer downloads the latest stable Terchess release, prepares the app folder, and launches Terchess. The first launch creates a private Python environment and installs the app's Python dependencies.
+
+**Windows — PowerShell:**
+
+```powershell
+irm https://raw.githubusercontent.com/MaybeSobi/Terchess/main/install.ps1 | iex
+```
+
+**macOS — Terminal** (requires Homebrew; the installer uses it to install/check Python and Stockfish):
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/install-macos.sh)
+```
+
+**Linux — Terminal** (supports APT, DNF, pacman, and zypper; package installation may ask for your sudo password):
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/install-linux.sh)
+```
+
+The installers try to install Python and Stockfish through the operating system's package manager where possible. On Windows, Python is installed through WinGet when available; Stockfish may still need to be downloaded manually. If Stockfish is not detected, download it from the [official Stockfish website](https://stockfishchess.org/download/) and select its executable in Terchess Settings.
+
+**Security note:** these commands download and run an installer from this repository. If you prefer to inspect it first, open [install.ps1](install.ps1), [install-macos.sh](install-macos.sh), or [install-linux.sh](install-linux.sh) and review the script before running it.
+
+---
+
 Terchess is a **Python terminal application**, not a standalone Windows `.exe`. The same source ZIP works on Windows, macOS, and Linux. You extract it, install its Python dependencies into a virtual environment, and run it from a terminal.
 
 ### What you need first

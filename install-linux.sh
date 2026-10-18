@@ -28,7 +28,7 @@ if command -v apt-get >/dev/null 2>&1; then
 elif command -v dnf >/dev/null 2>&1; then
   install_packages dnf install -y python3 python3-pip curl unzip stockfish
 elif command -v pacman >/dev/null 2>&1; then
-  install_packages pacman -Sy --needed --noconfirm python python-pip curl unzip stockfish
+  install_packages pacman -S --needed --noconfirm python python-pip curl unzip stockfish
 elif command -v zypper >/dev/null 2>&1; then
   install_packages zypper --non-interactive install python3 python3-pip curl unzip stockfish
 else

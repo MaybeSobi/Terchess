@@ -11,13 +11,33 @@ info() { printf '\033[1;36m[Terchess]\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m[Terchess]\033[0m %s\n' "$*"; }
 
 if ! command -v brew >/dev/null 2>&1; then
-  echo "Homebrew is required for automatic setup on macOS."
-  echo "Install it from https://brew.sh, then rerun this installer."
+  echo "Homebrew is needed to install Python and Stockfish automatically on macOS."
+  read -r -p "Install Homebrew now from its official installer? [y/N] " answer
+  case "$answer" in
+    y|Y|yes|YES)
+      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      ;;
+    *)
+      echo "Install Homebrew from https://brew.sh, then rerun this installer."
+      exit 1
+      ;;
+  esac
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
+fi
+
+if ! command -v brew >/dev/null 2>&1; then
+  echo "Homebrew was not found after installation. Open a new Terminal and rerun this installer."
   exit 1
 fi
 
-info "Installing/checking Python and Stockfish with Homebrew..."
-brew install python stockfish || warn "Homebrew reported an install issue; checking whether the required commands are available."
+info "Installing/checking Python with Homebrew..."
+brew install python || warn "Homebrew reported a Python install issue; checking whether Python is available."
+info "Installing/checking Stockfish with Homebrew..."
+brew install stockfish || warn "Stockfish could not be installed automatically; it can be installed separately."
 
 if ! command -v python3 >/dev/null 2>&1 || ! python3 -c 'import sys; raise SystemExit(0 if sys.version_info >= (3,10) else 1)'; then
   echo "Python 3.10+ is required. Install it from https://www.python.org/downloads/macos/ and rerun."

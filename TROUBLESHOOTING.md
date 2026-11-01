@@ -107,7 +107,7 @@ The one-command installers preserve an existing `.venv` when refreshing the appl
 
 The one-command installers register a user-level `terchess` command; no desktop shortcut is created.
 
-- **Windows:** the installer creates `terchess.cmd` in `%LOCALAPPDATA%\\Programs\\Terchess`, adds that directory to your user PATH, and updates the current PowerShell session. If a new terminal cannot find the command, close and reopen the terminal.
+- **Windows:** the installer creates `terchess.cmd` in `%LOCALAPPDATA%\Programs\Terchess`, adds that directory to your user PATH, and updates the current PowerShell session. If a new terminal cannot find the command, close and reopen the terminal.
 - **Linux/macOS:** the installer creates `~/.local/bin/terchess` and adds `~/.local/bin` to the detected shell startup file. Open a new terminal after installation. In an existing Bash or Zsh terminal, run `export PATH="$HOME/.local/bin:$PATH"`.
 - **Manual ZIP installation:** activate the project's `.venv` before using `terchess`; the global command is registered by the one-command installers.
 

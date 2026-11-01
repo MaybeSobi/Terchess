@@ -113,7 +113,7 @@ terchess
 terchess --version
 ```
 
-The Windows installer adds `%LOCALAPPDATA%\\Programs\\Terchess` to your user PATH and updates the current PowerShell session, so the command works immediately. Linux and macOS installers create `~/.local/bin/terchess` and add `~/.local/bin` to the detected shell's startup file. Open a new terminal once so it loads the PATH change; in an already-open Bash or Zsh terminal, run `export PATH="$HOME/.local/bin:$PATH"`.
+The Windows installer adds `%LOCALAPPDATA%\Programs\Terchess` to your user PATH and updates the current PowerShell session, so the command works immediately. Linux and macOS installers create `~/.local/bin/terchess` and add `~/.local/bin` to the detected shell's startup file. Open a new terminal once so it loads the PATH change; in an already-open Bash or Zsh terminal, run `export PATH="$HOME/.local/bin:$PATH"`.
 
 The one-command installers provide this terminal command. When installing manually from the ZIP, activate the project's `.venv` first; `terchess` is then available in that activated environment.
 

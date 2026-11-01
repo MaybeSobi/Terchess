@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "terchess"
-version = "1.0.2"
+version = "1.1.0"
 description = "Terminal chess against a local Stockfish engine, with board and blindfold modes"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -49,3 +49,6 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.setuptools.package-data]
+terchess = ["data/*.tsv"]

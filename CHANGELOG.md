@@ -2,6 +2,17 @@
 
 All notable changes to Terchess are documented here.
 
+## [1.1.0] — 2026-11-01
+
+- Add automatic local game history backed by SQLite, including game metadata and stored PGN.
+- Add a history browser with move replay plus single-game and full-history PGN export.
+- Add PGN import for bringing existing games into the local database.
+- Add two-player Hotseat play on one device, with player names, shared time controls, resignation, and clock handling.
+- Add offline ECO opening recognition using the CC0 Lichess chess-openings dataset.
+- Show the detected opening during play and preserve ECO/opening headers in saved PGNs.
+- Make Stockfish initialization lazy so Hotseat and Game History work without an engine installed.
+
+
 ## [1.0.2] — 2026-10-16
 
 - Add one-click launch scripts for Windows, macOS, and Linux.

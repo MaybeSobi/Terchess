@@ -6,7 +6,7 @@
 
 **Your terminal. Your board. Your imagination.**
 
-A keyboard-first chess experience powered by a local Stockfish engine — play with a visible terminal board or go full blindfold and keep the position in your head.
+An offline-first, keyboard-first chess experience. Play Stockfish, challenge a friend in Hotseat, recognize openings, and keep a local PGN history — all from your terminal.
 
 [![CI](https://github.com/MaybeSobi/Terchess/actions/workflows/ci.yml/badge.svg)](https://github.com/MaybeSobi/Terchess/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
@@ -38,7 +38,12 @@ Type moves like `e4`, `Nf3`, `O-O`, or coordinate notation such as `e2e4`. Your 
 - **Numbered move history** during the current game.
 - **Persistent settings** — remember engine path, side, time control, skill level, and display mode.
 - **Cross-platform Python CLI** — designed for Windows, macOS, and Linux.
-- **Offline gameplay** once Python dependencies and Stockfish are installed.
+- **Game History** — completed games are stored automatically in a local SQLite database.
+- **PGN import/export** — bring in existing games or export one game and your full collection.
+- **Hotseat multiplayer** — two players can share one computer, terminal, and chess clock.
+- **Offline Opening Recognition** — identify named openings and ECO codes as the game develops.
+- **Stockfish optional for local play** — Hotseat, history, PGN, and opening lookup work without an engine.
+- **Offline gameplay** after the initial Python dependency installation.
 
 ## Example session
 
@@ -65,10 +70,10 @@ Your move > Nf3
 ## Requirements
 
 - Python **3.10 or newer**
-- A Stockfish executable for your operating system
+- A Stockfish executable only if you want to play against the computer
 - A terminal with Unicode support (color support recommended)
 
-Download Stockfish from the [official Stockfish website](https://stockfishchess.org/download/). Terchess does **not** bundle the Stockfish executable; download it separately and select its path when prompted. Stockfish is a separate GPLv3 project — see [Third-party notices](THIRD_PARTY_NOTICES.md).
+Download Stockfish from the [official Stockfish website](https://stockfishchess.org/download/). Terchess does **not** bundle the Stockfish executable; download it separately and select its path when you choose Play vs Stockfish. Hotseat and Game History do not require Stockfish. Stockfish is a separate GPLv3 project — see [Third-party notices](THIRD_PARTY_NOTICES.md).
 
 ## Installation
 
@@ -110,13 +115,13 @@ Terchess is a **Python terminal application**, not a standalone Windows `.exe`. 
 
 ### 1. Download and extract the ZIP
 
-Download **[Terchess-1.0.2.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.0.2/Terchess-1.0.2.zip)** from the [stable v1.0.2 release](https://github.com/MaybeSobi/Terchess/releases/tag/v1.0.2), then extract it.
+Download **[Terchess-1.1.0.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.1.0/Terchess-1.1.0.zip)** from the [stable v1.1.0 release](https://github.com/MaybeSobi/Terchess/releases/tag/v1.1.0), then extract it.
 
 - **Windows:** In File Explorer, right-click the ZIP and choose **Extract All…**.
 - **macOS:** Double-click the ZIP in Finder; macOS extracts the folder beside it.
 - **Kali/Linux:** You can extract the ZIP with your file manager, or install and use `unzip` as shown below.
 
-After extraction, you should have a folder named `Terchess-1.0.2`. Open a terminal **inside that folder**. The project root is the folder containing `pyproject.toml` and the `src` directory. The `cd` examples below assume you extracted it into Downloads; adjust the path if you chose another location.
+After extraction, you should have a folder named `Terchess-1.1.0`. Open a terminal **inside that folder**. The project root is the folder containing `pyproject.toml` and the `src` directory. The `cd` examples below assume you extracted it into Downloads; adjust the path if you chose another location.
 
 ### Quick launch — recommended
 
@@ -136,7 +141,7 @@ Before using a launcher, install **Python 3.10 or newer**. On Kali/Debian/Ubuntu
 First, open PowerShell and move into the extracted project folder:
 
 ```powershell
-cd "$HOME\Downloads\Terchess-1.0.2"
+cd "$HOME\Downloads\Terchess-1.1.0"
 Get-ChildItem pyproject.toml
 ```
 
@@ -157,7 +162,7 @@ The first install downloads the libraries listed by the project automatically. Y
 **If PowerShell blocks activation:** open Command Prompt (CMD) and run these commands instead. The first path assumes the project is in your Downloads folder:
 
 ```bat
-cd /d "%USERPROFILE%\Downloads\Terchess-1.0.2"
+cd /d "%USERPROFILE%\Downloads\Terchess-1.1.0"
 py -3 -m venv .venv
 .venv\Scripts\activate.bat
 python -m pip install --upgrade pip
@@ -204,10 +209,10 @@ The `[dev]` extra installs `pytest`; it is not required just to play.
 
 #### Download, extract, and enter the project directory
 
-Download [Terchess-1.0.2.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.0.2/Terchess-1.0.2.zip) from the [stable release page](https://github.com/MaybeSobi/Terchess/releases/tag/v1.0.2). In Finder, double-click the ZIP to extract it. If you saved it to Downloads, open Terminal and enter the extracted project folder:
+Download [Terchess-1.1.0.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.1.0/Terchess-1.1.0.zip) from the [stable release page](https://github.com/MaybeSobi/Terchess/releases/tag/v1.1.0). In Finder, double-click the ZIP to extract it. If you saved it to Downloads, open Terminal and enter the extracted project folder:
 
 ```bash
-cd "$HOME/Downloads/Terchess-1.0.2"
+cd "$HOME/Downloads/Terchess-1.1.0"
 ls pyproject.toml
 ```
 
@@ -237,7 +242,7 @@ python -m pytest -q
 When you open a new Terminal window later, return to the project directory and reactivate the environment:
 
 ```bash
-cd "$HOME/Downloads/Terchess-1.0.2"
+cd "$HOME/Downloads/Terchess-1.1.0"
 source .venv/bin/activate
 terchess
 ```
@@ -251,12 +256,12 @@ sudo apt update
 sudo apt install -y python3-full python3-venv python3-pip unzip stockfish
 ```
 
-Download `Terchess-1.0.2.zip` from the [releases page](https://github.com/MaybeSobi/Terchess/releases), then extract it. For a ZIP saved in Downloads, these commands make a Projects folder, extract the archive, and enter the project root:
+Download `Terchess-1.1.0.zip` from the [releases page](https://github.com/MaybeSobi/Terchess/releases), then extract it. For a ZIP saved in Downloads, these commands make a Projects folder, extract the archive, and enter the project root:
 
 ```bash
 mkdir -p ~/Projects
-unzip ~/Downloads/Terchess-1.0.2.zip -d ~/Projects
-cd ~/Projects/Terchess-1.0.2
+unzip ~/Downloads/Terchess-1.1.0.zip -d ~/Projects
+cd ~/Projects/Terchess-1.1.0
 ls
 ```
 
@@ -297,7 +302,20 @@ After installation, keep the `.venv` folder with the project. When opening a new
 2. If Stockfish is not detected, enter the path to its executable.
 3. Choose **Start game**.
 4. In **Settings**, choose your side, time control, and Stockfish Skill Level from `0` to `20`.
-5. Use **Display mode** to toggle Board View / Blindfold text-only mode.
+5. Open **Game History** to browse/replay saved games and import or export PGN files.
+6. Use **Display mode** to toggle Board View / Blindfold text-only mode.
+
+## Game History and PGN
+
+Terchess automatically saves completed Stockfish and Hotseat games to a local SQLite database. The History menu lets you inspect game metadata, replay the move list, import standard PGN files, and export a selected game or your entire collection. The database lives in your per-user data directory, not inside the project folder.
+
+## Hotseat
+
+Choose **Hotseat** from the main menu, enter White and Black player names, then select a time control. Both players use the same terminal and chess clock. Use `resign` to resign or `menu` to abandon the current game and return to the main menu.
+
+## Opening Recognition
+
+Terchess identifies named openings and ECO codes offline as moves are played. The bundled reference data is derived from the CC0 Lichess chess-openings dataset; no network connection is used for recognition. Opening names are also saved to PGN headers when identified.
 
 Settings are stored outside the project directory and persist across restarts:
 
@@ -333,11 +351,11 @@ With the virtual environment active, run:
 python -m pytest
 ```
 
-The stable `v1.0.2` release includes one-click launch scripts for Windows, macOS, and Linux. GitHub Actions tests Python 3.10–3.13 on all three operating systems. The [release checklist](RELEASE_CHECKLIST.md) remains useful when testing future changes.
+The stable `v1.1.0` release includes one-click launch scripts for Windows, macOS, and Linux. GitHub Actions tests Python 3.10–3.13 on all three operating systems. The [release checklist](RELEASE_CHECKLIST.md) remains useful when testing future changes.
 
 ## Roadmap
 
-### `1.0.2` — One-click launchers · **Released 2026-10-16**
+### `1.1.0` — One-click launchers · **Released 2026-10-16**
 
 Add launch scripts for Windows, macOS, and Linux that create a private Python environment and install application dependencies on first run.
 
@@ -349,19 +367,19 @@ Add step-by-step macOS installation instructions, Stockfish setup options, and a
 
 The first stable release includes local Stockfish gameplay, Board View / Blindfold mode, clocks, legal move validation, persistent settings, cross-platform installation instructions, and automated CI tests.
 
-### `1.1.0` — Game History + play with friends
+### `1.1.0` — Game history, Hotseat + opening recognition · **Released 2026-11-01**
 
-- **Game History:** browse previous games and export/import PGN.
-- **Hotseat:** two people play on the same computer and terminal, taking turns.
-- **LAN multiplayer:** host or join a local-network game with a friend on another machine.
-- Graceful disconnect handling, rematches, and game termination.
+- SQLite local game history, PGN import/export, and move replay.
+- Two-player Hotseat with names and chess clocks.
+- Offline ECO opening recognition.
 
-### `1.2.0` — Stockfish analysis
+### `1.2.0` — LAN multiplayer
 
-- Analyze completed games with Stockfish.
-- Show evaluation swings and best-move suggestions.
-- Label inaccuracies, mistakes, and blunders.
-- Explore a **brilliant move** heuristic while explaining that move labels vary between analysis products.
+- Host/join over a local network, synchronized clocks, disconnect handling, and rematches.
+
+### `1.3.0` — Stockfish analysis
+
+- Evaluation Bar, best-move suggestions, and mistake/blunder detection.
 
 ## Contributing
 

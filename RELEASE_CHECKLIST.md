@@ -55,3 +55,16 @@ The checklist above is retained as a practical template for future releases; the
 - CI checks POSIX shell syntax for `run_terchess.sh` and `run_terchess.command` on Linux and macOS runners.
 - Launchers create `.venv` and install project dependencies when required.
 - Manual launch testing on physical Windows, macOS, and Linux systems is recommended when available.
+
+
+## v1.1.0 feature verification
+
+- [ ] Finish a Stockfish game and confirm it is recorded in the SQLite history.
+- [ ] Finish a Hotseat game and confirm both player names, result, and time control are stored.
+- [ ] Browse a saved game and replay its main line.
+- [ ] Import a PGN file containing one game and a file containing multiple games.
+- [ ] Export one saved game and export the entire local history; re-import both outputs.
+- [ ] Confirm ECO and opening names are recognized for common lines and saved to PGN headers.
+- [ ] Confirm Hotseat and Game History work when Stockfish is not installed or not configured.
+- [ ] Confirm the database is stored in the per-user data directory, not inside the project folder.
+- [ ] Confirm malformed PGN input reports an error without crashing the application.

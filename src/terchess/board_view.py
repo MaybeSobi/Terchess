@@ -96,21 +96,23 @@ def render_position(
     console: Console,
     board: chess.Board,
     human_color: chess.Color,
-    skill_level: int,
+    skill_level: int | None,
     clock: ChessClock,
     time_control_name: str,
     notice: str | None = None,
+    opening_name: str | None = None,
+    game_label: str | None = None,
 ) -> None:
     """Clear and render the board plus a live-clock snapshot and move history."""
     console.clear()
     side_name = color_name(human_color)
     turn_name = f"{color_name(board.turn)} to move"
     header = Text(
-        f"TERCHESS  |  {side_name}  |  Skill {skill_level}/20  |  {time_control_name}",
+        f"TERCHESS  |  {side_name}  |  {f'Skill {skill_level}/20' if skill_level is not None else (game_label or 'Local game')}  |  {time_control_name}",
         style="bold bright_white",
     )
     board_panel = Panel(
-        board_table(board, human_color), title=header, subtitle="Last move highlighted",
+        board_table(board, human_color), title=header, subtitle=(f"{opening_name} · Last move highlighted" if opening_name else "Last move highlighted"),
         border_style="bright_green", padding=(1, 1), expand=False,
     )
     clocks = Table.grid(padding=(0, 1))
@@ -132,6 +134,10 @@ def render_position(
         "[cyan]resign[/cyan] resign game\n"
         "[cyan]menu[/cyan]  return to main menu"
     )
+    if game_label:
+        info_text = f"[bold]{game_label}[/bold]\n" + info_text
+    if opening_name:
+        info_text = f"[bold cyan]Opening: {opening_name}[/bold cyan]\n" + info_text
     if notice:
         info_text = f"[bold]Status[/bold]\n{notice}\n\n" + info_text
     info = Panel(info_text, title="Game info", border_style="magenta")
@@ -152,21 +158,30 @@ def render_text_position(
     console: Console,
     board: chess.Board,
     human_color: chess.Color,
-    skill_level: int,
+    skill_level: int | None,
     clock: ChessClock,
     time_control_name: str,
     notice: str | None = None,
+    opening_name: str | None = None,
+    game_label: str | None = None,
 ) -> None:
     """Render a blindfold/text-only game screen without a chessboard diagram."""
     console.clear()
     side_name = color_name(human_color)
     engine_color = color_name(not human_color)
     turn_name = f"{color_name(board.turn)} to move"
-    header = (
-        f"[bold bright_green]TERCHESS · BLINDFOLD MODE[/bold bright_green]\n"
-        f"You: [bold]{side_name}[/bold]  ·  Stockfish: [bold]{engine_color}[/bold]\n"
-        f"Skill Level: [bold]{skill_level}/20[/bold]  ·  Time: [bold]{time_control_name}[/bold]"
-    )
+    if game_label:
+        header = (
+            f"[bold bright_green]TERCHESS · BLINDFOLD MODE[/bold bright_green]\n"
+            f"[bold]{game_label}[/bold]\n"
+            f"Time: [bold]{time_control_name}[/bold]"
+        )
+    else:
+        header = (
+            f"[bold bright_green]TERCHESS · BLINDFOLD MODE[/bold bright_green]\n"
+            f"You: [bold]{side_name}[/bold]  ·  Stockfish: [bold]{engine_color}[/bold]\n"
+            f"Skill Level: [bold]{skill_level}/20[/bold]  ·  Time: [bold]{time_control_name}[/bold]"
+        )
     console.print(Panel(header, title="Text-only game", border_style="bright_green"))
     clocks = Table.grid(padding=(0, 2))
     clocks.add_column()
@@ -184,6 +199,8 @@ def render_text_position(
         "[bold]Moves:[/bold] SAN (e4, Nf3, O-O) or coordinates (e2e4)\n"
         "[bold]Commands:[/bold] help · moves · resign · menu"
     )
+    if opening_name:
+        info += f"\n[bold cyan]Opening:[/bold cyan] {opening_name}"
     if notice:
         info += f"\n\n[bold]Latest:[/bold] {notice}"
     console.print(Panel(info, title="Blindfold play", border_style="magenta"))

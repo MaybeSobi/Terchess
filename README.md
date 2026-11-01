@@ -369,31 +369,35 @@ The stable `v1.1.0` release includes local SQLite game history, PGN import/expor
 
 ## Roadmap
 
-### `1.0.2` — One-click launchers · **Released 2026-10-16**
+### `1.3.0` — Stockfish analysis · Planned
 
-Add launch scripts for Windows, macOS, and Linux that create a private Python environment and install application dependencies on first run.
+- Evaluation bar and best-move suggestions.
+- Mistake and blunder recognition.
 
-### `1.0.1` — macOS support · **Released 2026-10-16**
+### `1.2.0` — LAN multiplayer · Planned
 
-Add step-by-step macOS installation instructions, Stockfish setup options, and automated CI coverage on macOS for Python 3.10–3.13.
-
-### `1.0.0` — Stable offline release · **Released 2026-10-16**
-
-The first stable release includes local Stockfish gameplay, Board View / Blindfold mode, clocks, legal move validation, persistent settings, cross-platform installation instructions, and automated CI tests.
+- Host/join over a local network.
+- Synchronized clocks, disconnect handling, and rematches.
 
 ### `1.1.0` — Game history, Hotseat + opening recognition · **Released 2026-11-01**
 
 - SQLite local game history, PGN import/export, and move replay.
 - Two-player Hotseat with names and chess clocks.
-- Offline ECO opening recognition.
+- Offline ECO opening recognition and lazy Stockfish startup.
 
-### `1.2.0` — LAN multiplayer
+### `1.0.2` — One-click launchers · **Released 2026-10-16**
 
-- Host/join over a local network, synchronized clocks, disconnect handling, and rematches.
+- Launch scripts for Windows, macOS, and Linux.
+- Private Python environment and dependency installation on first launch.
 
-### `1.3.0` — Stockfish analysis
+### `1.0.1` — macOS support · **Released 2026-10-16**
 
-- Evaluation Bar, best-move suggestions, and mistake/blunder detection.
+- Step-by-step macOS setup and Stockfish installation guidance.
+- Automated macOS CI coverage for Python 3.10–3.13.
+
+### `1.0.0` — Stable offline release · **Released 2026-10-16**
+
+- Local Stockfish gameplay, Board View / Blindfold mode, clocks, legal move validation, persistent settings, and cross-platform setup.
 
 ## Contributing
 

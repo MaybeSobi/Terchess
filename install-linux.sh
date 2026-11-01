@@ -16,7 +16,10 @@ install_terchess_command() {
   local command_path="$bin_dir/terchess"
   mkdir -p "$bin_dir"
 
-  cat > "$command_path" <<TERCHESS_COMMAND
+  if [[ -e "$command_path" || -L "$command_path" ]] && ! grep -Fq '# TERCHESS_MANAGED_COMMAND' "$command_path" 2>/dev/null; then
+    warn "A different command already exists at $command_path; leaving it untouched."
+  else
+    cat > "$command_path" <<TERCHESS_COMMAND
 #!/usr/bin/env bash
 # TERCHESS_MANAGED_COMMAND
 APP_DIR="$APP_DIR"
@@ -28,7 +31,8 @@ fi
 
 exec "\$APP_DIR/run_terchess.sh" "\$@"
 TERCHESS_COMMAND
-  chmod +x "$command_path"
+    chmod +x "$command_path"
+  fi
 
   add_path_block() {
     local startup_file="$1"

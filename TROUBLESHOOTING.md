@@ -64,7 +64,7 @@ python -m pip install .
 
 ## Windows installer does not detect an existing Stockfish build
 
-The PowerShell installer checks Stockfish on PATH, common install locations, and executable files under `C:\\Engines`. It validates candidates with a UCI handshake and stores a working executable path in `%APPDATA%\\Terchess\\config.json`. If your engine is in a different folder, add that folder to PATH or select the executable when Terchess asks for it.
+The PowerShell installer checks Stockfish on PATH, common install locations, and executable files under `C:\\Engines`. A candidate is accepted only if it completes a UCI handshake and advertises a `Skill Level` spin option covering the full 0–20 range. Its path is merged into `%APPDATA%\\Terchess\\config.json` without replacing other preferences. Invalid or non-object JSON is left unchanged. Linux and macOS installers apply the same UCI/Skill Level check to `stockfish` found on PATH. If your engine is in a different folder, add that folder to PATH or select the executable when Terchess asks for it.
 
 ## Stockfish cannot be found
 
@@ -97,3 +97,8 @@ Use a terminal with Unicode support and a font containing chess-piece glyphs. If
 - Stockfish is separate from Terchess. Install it for your OS and select its executable in the game if it is not detected automatically.
 
 The launcher stores the Python environment in `.venv/` next to the project. Keep that folder with the extracted project; if you move or re-extract the project to a new directory, run the launcher again to create a fresh environment.
+
+
+## Reinstalling or updating Terchess
+
+The one-command installers preserve an existing `.venv` when refreshing the application files. They check the project's declared Python dependencies and reinstall only the Terchess package itself, so an ordinary repeat install does not rebuild the virtual environment. If the environment is damaged or cannot be updated, the installer reports the failure rather than silently claiming the update succeeded.

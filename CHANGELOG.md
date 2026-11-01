@@ -5,7 +5,9 @@ All notable changes to Terchess are documented here.
 ## [Unreleased]
 
 - Fix the Windows installer so it detects and reuses existing Stockfish executables (including manual builds under `C:\\Engines`) before attempting a WinGet installation.
-- Save the detected Stockfish executable path into Terchess user settings for first launch.
+- Save a detected Stockfish executable path only after verifying that its UCI options support Terchess Skill Level 0–20.
+- Merge the detected engine path into valid JSON settings without overwriting other preferences; leave corrupt or non-object settings files untouched.
+- Preserve an existing `.venv` during repeat installs on Windows, Linux, and macOS; refresh the application package and declared dependencies in place.
 
 ## [1.1.0] — 2026-11-01
 

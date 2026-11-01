@@ -29,11 +29,46 @@ function Test-StockfishExecutable {
         return $false
     }
 
-    # Verify the UCI protocol instead of trusting a filename or stale PATH entry.
+    # Probe with a timeout and require the full Skill Level 0-20 range.
+    $probeScript = @'
+import re
+import subprocess
+import sys
+
+try:
+    result = subprocess.run(
+        [sys.argv[1]],
+        input="uci\nquit\n",
+        capture_output=True,
+        text=True,
+        timeout=8,
+        check=False,
+    )
+except (OSError, subprocess.SubprocessError):
+    raise SystemExit(1)
+
+if result.returncode != 0:
+    raise SystemExit(1)
+
+match = re.search(
+    r"(?m)^option name Skill Level type spin default -?\d+ min (-?\d+) max (-?\d+)\s*$",
+    result.stdout,
+)
+if not match:
+    raise SystemExit(1)
+
+minimum, maximum = map(int, match.groups())
+raise SystemExit(0 if minimum <= 0 and maximum >= 20 else 1)
+'@
+
     try {
-        $probeOutput = @("uci", "quit") | & $Path 2>$null
-        if ($LASTEXITCODE -ne 0) { return $false }
-        return (($probeOutput -join [Environment]::NewLine) -match "(?m)^uciok\s*$")
+        if ($Python -eq "py") {
+            $pythonArgs = @("-3", "-c", $probeScript, $Path)
+        } else {
+            $pythonArgs = @("-c", $probeScript, $Path)
+        }
+        & $Python @pythonArgs 2>$null | Out-Null
+        return ($LASTEXITCODE -eq 0)
     } catch {
         return $false
     }
@@ -91,7 +126,10 @@ function Save-DetectedStockfishPath {
     if (Test-Path -LiteralPath $configPath -PathType Leaf) {
         try {
             $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
-            if ($null -eq $config) { $config = [pscustomobject]@{} }
+            if ($null -eq $config -or $config -isnot [pscustomobject]) {
+                Write-Warn "Existing Terchess settings are not a JSON object. I left them unchanged."
+                return
+            }
         } catch {
             Write-Warn "Existing Terchess settings contain invalid JSON. I left them unchanged; you can set the engine path in Terchess Settings."
             return
@@ -100,11 +138,29 @@ function Save-DetectedStockfishPath {
         $config = [pscustomobject]@{}
     }
 
+    # Add or replace only this property; all other existing settings are retained.
     $config | Add-Member -MemberType NoteProperty -Name "stockfish_path" -Value $EnginePath -Force
-    $json = $config | ConvertTo-Json -Depth 10
+    $json = $config | ConvertTo-Json -Depth 20
     $utf8WithoutBom = [System.Text.UTF8Encoding]::new($false)
-    [System.IO.File]::WriteAllText($configPath, $json + [Environment]::NewLine, $utf8WithoutBom)
-    Write-Info "Saved the detected Stockfish path to Terchess settings."
+    $temporaryPath = "$configPath.$([guid]::NewGuid().ToString('N')).tmp"
+
+    try {
+        [System.IO.File]::WriteAllText(
+            $temporaryPath,
+            $json + [Environment]::NewLine,
+            $utf8WithoutBom
+        )
+
+        if (Test-Path -LiteralPath $configPath -PathType Leaf) {
+            [System.IO.File]::Replace($temporaryPath, $configPath, $null)
+        } else {
+            [System.IO.File]::Move($temporaryPath, $configPath)
+        }
+        Write-Info "Saved the detected Stockfish path without changing other Terchess settings."
+    } catch {
+        Remove-Item -LiteralPath $temporaryPath -Force -ErrorAction SilentlyContinue
+        Write-Warn "Could not safely update Terchess settings; the existing config was preserved. Set the engine path in Terchess Settings."
+    }
 }
 
 Write-Info "Checking Python 3.10+..."
@@ -185,12 +241,35 @@ try {
     if (-not $project) { throw "The downloaded archive does not contain pyproject.toml." }
     $source = $project.Directory.FullName
 
-    if (Test-Path -LiteralPath $destination) {
-        Remove-Item -LiteralPath $destination -Recurse -Force
+    if (Test-Path -LiteralPath $destination -PathType Container) {
+        # Keep the existing virtual environment; replace only application files.
+        Get-ChildItem -LiteralPath $destination -Force |
+            Where-Object { -not ($_.Name -eq ".venv" -and $_.PSIsContainer) } |
+            Remove-Item -Recurse -Force
+    } else {
+        if (Test-Path -LiteralPath $destination) {
+            Remove-Item -LiteralPath $destination -Force
+        }
+        New-Item -ItemType Directory -Force -Path $destination | Out-Null
     }
 
-    New-Item -ItemType Directory -Force -Path $destination | Out-Null
-    Copy-Item -Path (Join-Path $source "*") -Destination $destination -Recurse -Force
+    Get-ChildItem -LiteralPath $source -Force |
+        Copy-Item -Destination $destination -Recurse -Force
+
+    # Check declared dependencies, then refresh only Terchess itself in the old venv.
+    $venvPython = Join-Path $destination ".venv\Scripts\python.exe"
+    if (Test-Path -LiteralPath $venvPython -PathType Leaf) {
+        Write-Info "Updating Terchess inside the existing Python environment..."
+        & $venvPython -m pip install --disable-pip-version-check $destination
+        if ($LASTEXITCODE -ne 0) {
+            throw "Could not update Python dependencies in the existing .venv. Check the connection and rerun the installer."
+        }
+
+        & $venvPython -m pip install --disable-pip-version-check --force-reinstall --no-deps $destination
+        if ($LASTEXITCODE -ne 0) {
+            throw "Could not refresh Terchess in the existing .venv. Rerun the installer to retry."
+        }
+    }
 } finally {
     Remove-Item -LiteralPath $temp -Recurse -Force -ErrorAction SilentlyContinue
 }

@@ -79,7 +79,7 @@ Download Stockfish from the [official Stockfish website](https://stockfishchess.
 
 ## One-command installation (recommended)
 
-Run the command for your operating system. The installer downloads the latest stable Terchess release, prepares the app folder, and launches Terchess. The first launch creates a private Python environment and installs the app's Python dependencies.
+Run the command for your operating system. The installer downloads the latest stable Terchess release, prepares the app folder, and launches Terchess. On first install it creates a private Python environment. On repeat installs it preserves the existing `.venv`, checks declared dependencies, and refreshes the Terchess package without rebuilding that environment.
 
 **Windows — PowerShell:**
 
@@ -99,7 +99,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/inst
 bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/install-linux.sh)
 ```
 
-The installers try to install Python and Stockfish through the operating system's package manager where possible. On Windows, Python is installed through WinGet when available. The PowerShell installer first checks PATH and common manual-install folders (including C:\\Engines) for a working Stockfish executable; it only uses WinGet if no existing engine can be found. When the Windows installer detects an existing Stockfish executable, it saves that full path in Terchess settings so the engine is ready at first launch. If no working engine is detected, download it from the [official Stockfish website](https://stockfishchess.org/download/) and select its executable in Terchess Settings.
+The installers try to install Python and Stockfish through the operating system's package manager where possible. On Windows, Python is installed through WinGet when available. The Windows installer checks PATH and common manual-install folders (including C:\\Engines) before trying WinGet; Linux and macOS installers check the `stockfish` command on PATH. A detected engine must complete a UCI handshake and expose the full UCI `Skill Level` range (0–20) before its path is saved. The installer updates only `stockfish_path` in a valid JSON settings object, preserving other preferences; malformed or non-object settings files are left untouched. If no compatible engine is detected, download Stockfish from the [official website](https://stockfishchess.org/download/) and select its executable in Terchess Settings.
 
 **Security note:** these commands download and run an installer from this repository. If you prefer to inspect it first, open [install.ps1](install.ps1), [install-macos.sh](install-macos.sh), or [install-linux.sh](install-linux.sh) and review the script before running it.
 

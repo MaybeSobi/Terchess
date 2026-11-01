@@ -7,31 +7,19 @@ function Write-Warn($Message) { Write-Host "[Terchess] $Message" -ForegroundColo
 function Get-PythonCommand {
     if (Get-Command py -ErrorAction SilentlyContinue) {
         try {
-            & py -3 -c "import sys; raise SystemExit(0 if sys.version_info >= (3,10) else 1)" 2>$null
+            & py -3 -c "import sys; raise SystemExit(0 if sys.version_info -ge (3,10) else 1)" 2>$null
             if ($LASTEXITCODE -eq 0) { return "py" }
         } catch {}
     }
+
     if (Get-Command python -ErrorAction SilentlyContinue) {
         try {
-            & python -c "import sys; raise SystemExit(0 if sys.version_info >= (3,10) else 1)" 2>$null
+            & python -c "import sys; raise SystemExit(0 if sys.version_info -ge (3,10) else 1)" 2>$null
             if ($LASTEXITCODE -eq 0) { return "python" }
         } catch {}
     }
-    return $null
-}
 
-Write-Info "Checking Python 3.10+..."
-$Python = Get-PythonCommand
-if (-not $Python) {
-    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        throw "Python 3.10+ is required. Install it from https://www.python.org/downloads/ and rerun this installer."
-    }
-    Write-Info "Installing Python with Windows Package Manager..."
-    winget install --id Python.Python.3.13 --exact --accept-package-agreements --accept-source-agreements
-    if ($LASTEXITCODE -ne 0) { throw "Python installation failed. Install Python 3.10+ manually, reopen PowerShell, and rerun." }
-    $env:Path = [Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [Environment]::GetEnvironmentVariable("Path","User")
-    $Python = Get-PythonCommand
-    if (-not $Python) { throw "Python was installed, but this PowerShell session cannot find it yet. Reopen PowerShell and rerun this command." }
+    return $null
 }
 
 function Test-StockfishExecutable {
@@ -41,9 +29,10 @@ function Test-StockfishExecutable {
         return $false
     }
 
-    # Probe the UCI handshake rather than trusting a filename or a stale PATH entry.
+    # Verify the UCI protocol instead of trusting a filename or stale PATH entry.
     try {
         $probeOutput = @("uci", "quit") | & $Path 2>$null
+        if ($LASTEXITCODE -ne 0) { return $false }
         return (($probeOutput -join [Environment]::NewLine) -match "(?m)^uciok\s*$")
     } catch {
         return $false
@@ -61,7 +50,7 @@ function Find-StockfishExecutable {
         }
     }
 
-    # Check common manual-install locations, including the path used by many Windows builds.
+    # Check common manual-install locations.
     foreach ($candidate in @(
         "C:\Engines\stockfish-windows-x86-64-universal\stockfish",
         "C:\Engines\stockfish-windows-x86-64-universal\stockfish.exe",
@@ -76,36 +65,8 @@ function Find-StockfishExecutable {
     $enginesRoot = "C:\Engines"
     if (Test-Path -LiteralPath $enginesRoot -PathType Container) {
         $engineFiles = Get-ChildItem -LiteralPath $enginesRoot -Filter "stockfish*" -File -Recurse -ErrorAction SilentlyContinue |
-            Where-Object { $_.Name -match '^stockfish(?:[-_].*)?(?:\.exe)?
-Write-Info "Finding the latest stable release..."
-$release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" -Headers @{ "User-Agent" = "Terchess-Installer" }
-$asset = $release.assets | Where-Object { $_.name -match '^Terchess-.*\.zip$' } | Select-Object -First 1
-if (-not $asset) { throw "Could not find a Terchess ZIP in the latest GitHub release." }
+            Where-Object { $_.Name -match '^stockfish(?:[-_].*)?(?:\.exe)?$' }
 
-$temp = Join-Path $env:TEMP ("terchess-install-" + [guid]::NewGuid().ToString("N"))
-$zip = Join-Path $temp "Terchess.zip"
-$extract = Join-Path $temp "extract"
-$destination = Join-Path $env:LOCALAPPDATA "Programs\Terchess"
-New-Item -ItemType Directory -Force -Path $extract | Out-Null
-try {
-    Write-Info "Downloading Terchess $($release.tag_name)..."
-    Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zip
-    Expand-Archive -Path $zip -DestinationPath $extract -Force
-    $project = Get-ChildItem -Path $extract -Filter "pyproject.toml" -Recurse -File | Select-Object -First 1
-    if (-not $project) { throw "The downloaded archive does not contain pyproject.toml." }
-    $source = $project.Directory.FullName
-
-    if (Test-Path $destination) { Remove-Item -Path $destination -Recurse -Force }
-    New-Item -ItemType Directory -Force -Path $destination | Out-Null
-    Copy-Item -Path (Join-Path $source "*") -Destination $destination -Recurse -Force
-} finally {
-    Remove-Item -Path $temp -Recurse -Force -ErrorAction SilentlyContinue
-}
-
-Write-Info "Installed to $destination"
-Write-Info "Launching Terchess. First launch installs its Python dependencies."
-& (Join-Path $destination "run_terchess.bat")
- }
         foreach ($engineFile in $engineFiles) {
             $candidates.Add($engineFile.FullName)
         }
@@ -132,7 +93,7 @@ function Save-DetectedStockfishPath {
             $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
             if ($null -eq $config) { $config = [pscustomobject]@{} }
         } catch {
-            Write-Warn "Existing Terchess settings contain invalid JSON. I left them unchanged; you can set the engine path in Terchess."
+            Write-Warn "Existing Terchess settings contain invalid JSON. I left them unchanged; you can set the engine path in Terchess Settings."
             return
         }
     } else {
@@ -141,9 +102,31 @@ function Save-DetectedStockfishPath {
 
     $config | Add-Member -MemberType NoteProperty -Name "stockfish_path" -Value $EnginePath -Force
     $json = $config | ConvertTo-Json -Depth 10
-    $utf8WithoutBom = New-Object System.Text.UTF8Encoding($false)
+    $utf8WithoutBom = [System.Text.UTF8Encoding]::new($false)
     [System.IO.File]::WriteAllText($configPath, $json + [Environment]::NewLine, $utf8WithoutBom)
     Write-Info "Saved the detected Stockfish path to Terchess settings."
+}
+
+Write-Info "Checking Python 3.10+..."
+$Python = Get-PythonCommand
+if (-not $Python) {
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+        throw "Python 3.10+ is required. Install it from https://www.python.org/downloads/ and rerun this installer."
+    }
+
+    Write-Info "Installing Python with Windows Package Manager..."
+    winget install --id Python.Python.3.13 --exact --accept-package-agreements --accept-source-agreements
+    if ($LASTEXITCODE -ne 0) {
+        throw "Python installation failed. Install Python 3.10+ manually, reopen PowerShell, and rerun."
+    }
+
+    $machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
+    $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+    $env:Path = "$machinePath;$userPath"
+    $Python = Get-PythonCommand
+    if (-not $Python) {
+        throw "Python was installed, but this PowerShell session cannot find it yet. Reopen PowerShell and rerun this command."
+    }
 }
 
 Write-Info "Checking Stockfish..."
@@ -154,14 +137,19 @@ if ($StockfishPath) {
     Save-DetectedStockfishPath -EnginePath $StockfishPath
 } else {
     Write-Warn "No working Stockfish executable was found on PATH or under C:\Engines."
+
     if (Get-Command winget -ErrorAction SilentlyContinue) {
         Write-Info "Trying to install Stockfish with winget..."
         winget install --id Stockfish.Stockfish --exact --accept-package-agreements --accept-source-agreements
+
         if ($LASTEXITCODE -ne 0) {
             Write-Warn "Automatic Stockfish installation was not available. Install it from https://stockfishchess.org/download/."
         } else {
-            $env:Path = [Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [Environment]::GetEnvironmentVariable("Path","User")
+            $machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
+            $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+            $env:Path = "$machinePath;$userPath"
             $StockfishPath = Find-StockfishExecutable
+
             if ($StockfishPath) {
                 Write-Info "Found the newly installed Stockfish engine: $StockfishPath"
                 Save-DetectedStockfishPath -EnginePath $StockfishPath
@@ -175,7 +163,10 @@ if ($StockfishPath) {
 }
 
 Write-Info "Finding the latest stable release..."
-$release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" -Headers @{ "User-Agent" = "Terchess-Installer" }
+$release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" -Headers @{
+    "User-Agent" = "Terchess-Installer"
+    "Accept" = "application/vnd.github+json"
+}
 $asset = $release.assets | Where-Object { $_.name -match '^Terchess-.*\.zip$' } | Select-Object -First 1
 if (-not $asset) { throw "Could not find a Terchess ZIP in the latest GitHub release." }
 
@@ -184,19 +175,24 @@ $zip = Join-Path $temp "Terchess.zip"
 $extract = Join-Path $temp "extract"
 $destination = Join-Path $env:LOCALAPPDATA "Programs\Terchess"
 New-Item -ItemType Directory -Force -Path $extract | Out-Null
+
 try {
     Write-Info "Downloading Terchess $($release.tag_name)..."
-    Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zip
+    Invoke-WebRequest -UseBasicParsing -Uri $asset.browser_download_url -OutFile $zip
     Expand-Archive -Path $zip -DestinationPath $extract -Force
+
     $project = Get-ChildItem -Path $extract -Filter "pyproject.toml" -Recurse -File | Select-Object -First 1
     if (-not $project) { throw "The downloaded archive does not contain pyproject.toml." }
     $source = $project.Directory.FullName
 
-    if (Test-Path $destination) { Remove-Item -Path $destination -Recurse -Force }
+    if (Test-Path -LiteralPath $destination) {
+        Remove-Item -LiteralPath $destination -Recurse -Force
+    }
+
     New-Item -ItemType Directory -Force -Path $destination | Out-Null
     Copy-Item -Path (Join-Path $source "*") -Destination $destination -Recurse -Force
 } finally {
-    Remove-Item -Path $temp -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $temp -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 Write-Info "Installed to $destination"

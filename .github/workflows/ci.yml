@@ -35,8 +35,23 @@ jobs:
         run: python -m pip install -e ".[dev]"
       - name: Compile source
         run: python -m compileall -q src
-      - name: Validate Unix launchers
+      - name: Validate Unix installers and launchers
         if: runner.os != 'Windows'
-        run: bash -n run_terchess.sh run_terchess.command
+        run: bash -n install-linux.sh install-macos.sh run_terchess.sh run_terchess.command
+      - name: Validate PowerShell installer
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            "install.ps1",
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | Format-List *
+            throw "install.ps1 contains PowerShell syntax errors."
+          }
       - name: Run tests
         run: python -m pytest -q

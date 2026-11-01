@@ -47,7 +47,7 @@ try:
 except (OSError, subprocess.SubprocessError):
     raise SystemExit(1)
 
-if result.returncode != 0:
+if result.returncode != 0 or "uciok" not in result.stdout.splitlines():
     raise SystemExit(1)
 
 match = re.search(

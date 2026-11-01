@@ -74,8 +74,8 @@ except (OSError, subprocess.SubprocessError) as exc:
     print(f"Stockfish could not be started: {exc}", file=sys.stderr)
     raise SystemExit(1)
 
-if result.returncode != 0:
-    print("Stockfish exited with an error during its UCI check.", file=sys.stderr)
+if result.returncode != 0 or "uciok" not in result.stdout.splitlines():
+    print("Stockfish did not complete a successful UCI handshake.", file=sys.stderr)
     raise SystemExit(1)
 
 match = re.search(

@@ -28,12 +28,43 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+      - name: Confirm this is still the current main commit
+        id: freshness
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          MAIN_SHA="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
+          if [[ "$MAIN_SHA" == "$RELEASE_SHA" ]]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping release for a commit superseded on main."
+          fi
+      - name: Verify package and application versions match
+        if: steps.freshness.outputs.publish == 'true'
+        run: |
+          PROJECT_VERSION="$(python - <<'PY'
+          import tomllib
+          with open("pyproject.toml", "rb") as f:
+              print(tomllib.load(f)["project"]["version"])
+          PY
+          )"
+          APP_VERSION="$(python - <<'PY'
+          import runpy
+          values = runpy.run_path("src/terchess/__init__.py")
+          print(values["__version__"])
+          PY
+          )"
+          test "$PROJECT_VERSION" = "$APP_VERSION"
       - name: Build and validate Python distributions
+        if: steps.freshness.outputs.publish == 'true'
         run: |
           python -m pip install --upgrade build twine
           python -m build
           python -m twine check dist/*
       - name: Build the cross-platform source ZIP
+        if: steps.freshness.outputs.publish == 'true'
         run: |
           RAW_VERSION="$(python - <<'PY'
           import tomllib
@@ -55,6 +86,7 @@ jobs:
             echo "IS_PRERELEASE=false" >> "$GITHUB_ENV"
           fi
       - name: Publish the GitHub release
+        if: steps.freshness.outputs.publish == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}

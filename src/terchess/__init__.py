@@ -1,3 +1,3 @@
-"""Terchess: terminal chess against a local Stockfish engine."""
+"""Terchess: terminal chess, local play, and game history."""
 
-__version__ = "1.0.0rc1"
+__version__ = "1.1.0"

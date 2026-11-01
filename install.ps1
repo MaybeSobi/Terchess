@@ -4,6 +4,60 @@ $Repo = "MaybeSobi/Terchess"
 function Write-Info($Message) { Write-Host "[Terchess] $Message" -ForegroundColor Cyan }
 function Write-Warn($Message) { Write-Host "[Terchess] $Message" -ForegroundColor Yellow }
 
+function Install-TerchessCommand {
+    param([Parameter(Mandatory=$true)][string]$InstallDirectory)
+
+    $commandPath = Join-Path $InstallDirectory "terchess.cmd"
+    $shim = @'
+@echo off
+setlocal
+set "TERCHESS_HOME=%~dp0"
+if exist "%TERCHESS_HOME%.venv\Scripts\python.exe" goto run_terchess
+call "%TERCHESS_HOME%run_terchess.bat" %*
+exit /b %ERRORLEVEL%
+:run_terchess
+"%TERCHESS_HOME%.venv\Scripts\python.exe" -m terchess %*
+exit /b %ERRORLEVEL%
+'@
+    $utf8WithoutBom = [System.Text.UTF8Encoding]::new($false)
+    [System.IO.File]::WriteAllText($commandPath, $shim + [Environment]::NewLine, $utf8WithoutBom)
+
+    $normalizedInstallDirectory = $InstallDirectory.TrimEnd('\')
+    $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+    $pathEntries = @($userPath -split ';' | Where-Object { $_.Trim() })
+    $alreadyInUserPath = $false
+    foreach ($entry in $pathEntries) {
+        if ($entry.Trim().TrimEnd('\') -ieq $normalizedInstallDirectory) {
+            $alreadyInUserPath = $true
+            break
+        }
+    }
+
+    if (-not $alreadyInUserPath) {
+        $updatedUserPath = (@($pathEntries) + $InstallDirectory) -join ';'
+        try {
+            [Environment]::SetEnvironmentVariable("Path", $updatedUserPath, "User")
+            Write-Info "Added Terchess to your user PATH."
+        } catch {
+            Write-Warn "Could not update your user PATH automatically. Add this folder to PATH manually: $InstallDirectory"
+        }
+    }
+
+    $currentPathEntries = @($env:Path -split ';' | Where-Object { $_.Trim() })
+    $alreadyInCurrentPath = $false
+    foreach ($entry in $currentPathEntries) {
+        if ($entry.Trim().TrimEnd('\') -ieq $normalizedInstallDirectory) {
+            $alreadyInCurrentPath = $true
+            break
+        }
+    }
+    if (-not $alreadyInCurrentPath) {
+        $env:Path = "$InstallDirectory;$env:Path"
+    }
+
+    Write-Info "You can now launch Terchess from any terminal by typing: terchess"
+}
+
 function Get-PythonCommand {
     if (Get-Command py -ErrorAction SilentlyContinue) {
         try {
@@ -273,6 +327,8 @@ try {
 } finally {
     Remove-Item -LiteralPath $temp -Recurse -Force -ErrorAction SilentlyContinue
 }
+
+Install-TerchessCommand -InstallDirectory $destination
 
 Write-Info "Installed to $destination"
 Write-Info "Launching Terchess. First launch installs its Python dependencies."

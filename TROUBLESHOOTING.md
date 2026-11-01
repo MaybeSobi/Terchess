@@ -102,3 +102,17 @@ The launcher stores the Python environment in `.venv/` next to the project. Keep
 ## Reinstalling or updating Terchess
 
 The one-command installers preserve an existing `.venv` when refreshing the application files. They check the project's declared Python dependencies and reinstall only the Terchess package itself, so an ordinary repeat install does not rebuild the virtual environment. If the environment is damaged or cannot be updated, the installer reports the failure rather than silently claiming the update succeeded.
+
+## Launch Terchess with the `terchess` command
+
+The one-command installers register a user-level `terchess` command; no desktop shortcut is created.
+
+- **Windows:** the installer creates `terchess.cmd` in `%LOCALAPPDATA%\\Programs\\Terchess`, adds that directory to your user PATH, and updates the current PowerShell session. If a new terminal cannot find the command, close and reopen the terminal.
+- **Linux/macOS:** the installer creates `~/.local/bin/terchess` and adds `~/.local/bin` to the detected shell startup file. Open a new terminal after installation. In an existing Bash or Zsh terminal, run `export PATH="$HOME/.local/bin:$PATH"`.
+- **Manual ZIP installation:** activate the project's `.venv` before using `terchess`; the global command is registered by the one-command installers.
+
+Check the command with:
+
+```bash
+terchess --version
+```

@@ -30,7 +30,7 @@ if errorlevel 1 (
 )
 
 echo Starting Terchess...
-".venv\Scripts\python.exe" -m terchess
+".venv\Scripts\python.exe" -m terchess %*
 if errorlevel 1 goto app_failed
 echo.
 echo Terchess has exited.

@@ -10,6 +10,69 @@ trap cleanup EXIT
 info() { printf '\033[1;36m[Terchess]\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m[Terchess]\033[0m %s\n' "$*"; }
 
+
+install_terchess_command() {
+  local bin_dir="$HOME/.local/bin"
+  local command_path="$bin_dir/terchess"
+  mkdir -p "$bin_dir"
+
+  cat > "$command_path" <<TERCHESS_COMMAND
+#!/usr/bin/env bash
+# TERCHESS_MANAGED_COMMAND
+APP_DIR="$APP_DIR"
+VENV_PYTHON="\$APP_DIR/.venv/bin/python"
+
+if [[ -x "\$VENV_PYTHON" ]]; then
+  exec "\$VENV_PYTHON" -m terchess "\$@"
+fi
+
+exec "\$APP_DIR/run_terchess.sh" "\$@"
+TERCHESS_COMMAND
+  chmod +x "$command_path"
+
+  add_path_block() {
+    local startup_file="$1"
+    local path_line="$2"
+    mkdir -p "$(dirname "$startup_file")"
+    touch "$startup_file"
+    if grep -Fq 'TERCHESS CLI PATH' "$startup_file" || grep -Eq '(^|[[:space:]])(export[[:space:]]+)?PATH=.*\.local/bin|fish_add_path.*\.local/bin' "$startup_file"; then
+      return
+    fi
+    {
+      printf '\n# >>> TERCHESS CLI PATH >>>\n'
+      printf '%s\n' "$path_line"
+      printf '# <<< TERCHESS CLI PATH <<<\n'
+    } >> "$startup_file"
+  }
+
+  case "${SHELL##*/}" in
+    bash)
+      add_path_block "$HOME/.bashrc" 'case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) export PATH="$HOME/.local/bin:$PATH" ;; esac'
+      if [[ -f "$HOME/.bash_profile" ]]; then
+        add_path_block "$HOME/.bash_profile" 'case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) export PATH="$HOME/.local/bin:$PATH" ;; esac'
+      else
+        add_path_block "$HOME/.profile" 'case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) export PATH="$HOME/.local/bin:$PATH" ;; esac'
+      fi
+      ;;
+    zsh)
+      add_path_block "$HOME/.zshrc" 'case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) export PATH="$HOME/.local/bin:$PATH" ;; esac'
+      ;;
+    fish)
+      add_path_block "$HOME/.config/fish/config.fish" 'if not contains -- "$HOME/.local/bin" $PATH; set -gx PATH "$HOME/.local/bin" $PATH; end'
+      ;;
+    *)
+      add_path_block "$HOME/.profile" 'case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) export PATH="$HOME/.local/bin:$PATH" ;; esac'
+      ;;
+  esac
+
+  if [[ ":$PATH:" == *":$HOME/.local/bin:"* ]]; then
+    info "The 'terchess' command is available in this terminal."
+  else
+    info "Added ~/.local/bin to your shell startup file."
+    info "Open a new terminal to use 'terchess', or add ~/.local/bin to PATH in this terminal."
+  fi
+}
+
 install_packages() {
   if [[ $EUID -eq 0 ]]; then
     "$@"
@@ -188,6 +251,8 @@ if [[ -x "$VENV_PYTHON" ]]; then
   "$VENV_PYTHON" -m pip install --disable-pip-version-check "$APP_DIR"
   "$VENV_PYTHON" -m pip install --disable-pip-version-check --force-reinstall --no-deps "$APP_DIR"
 fi
+
+install_terchess_command
 
 info "Installed to $APP_DIR"
 info "Launching Terchess. First launch creates the Python environment only when needed."

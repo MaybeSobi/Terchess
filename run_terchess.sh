@@ -53,4 +53,4 @@ if ! "$VENV_PYTHON" -c 'import chess, rich, prompt_toolkit, terchess' >/dev/null
 fi
 
 echo "Starting Terchess..."
-"$VENV_PYTHON" -m terchess
+"$VENV_PYTHON" -m terchess "$@"

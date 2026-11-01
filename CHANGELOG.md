@@ -4,6 +4,10 @@ All notable changes to Terchess are documented here.
 
 ## [Unreleased]
 
+- Register a user-level `terchess` terminal command from one-command installers on Windows, Linux, and macOS.
+- Persist the command location in the user's PATH and forward CLI arguments through the platform launchers.
+- Refresh the README's quick-install guidance, current feature list, and roadmap descriptions.
+
 - Fix the Windows installer so it detects and reuses existing Stockfish executables (including manual builds under `C:\\Engines`) before attempting a WinGet installation.
 - Save a detected Stockfish executable path only after verifying that its UCI options support Terchess Skill Level 0–20.
 - Merge the detected engine path into valid JSON settings without overwriting other preferences; leave corrupt or non-object settings files untouched.

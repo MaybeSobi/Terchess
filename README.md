@@ -6,7 +6,7 @@
 
 **Your terminal. Your board. Your imagination.**
 
-An offline-first, keyboard-first chess experience. Play Stockfish, challenge a friend in Hotseat, recognize openings, and keep a local PGN history — all from your terminal.
+An offline-first, keyboard-first chess application for Windows, macOS, and Linux. Play a local Stockfish engine, challenge a friend in timed Hotseat games, review and replay games from a SQLite history, import or export PGN files, and recognize openings with an offline ECO database — all from your terminal.
 
 [![CI](https://github.com/MaybeSobi/Terchess/actions/workflows/ci.yml/badge.svg)](https://github.com/MaybeSobi/Terchess/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
@@ -37,12 +37,13 @@ Type moves like `e4`, `Nf3`, `O-O`, or coordinate notation such as `e2e4`. Your 
 - **Live chess clocks** — time controls with increment presets such as `3+2`.
 - **Numbered move history** during the current game.
 - **Persistent settings** — remember engine path, side, time control, skill level, and display mode.
-- **Cross-platform Python CLI** — designed for Windows, macOS, and Linux.
+- **Cross-platform Python CLI** — designed for Windows, macOS, and Linux. One-command installers register `terchess` so it can be launched from any terminal directory.
 - **Game History** — completed games are stored automatically in a local SQLite database.
 - **PGN import/export** — bring in existing games or export one game and your full collection.
 - **Hotseat multiplayer** — two players can share one computer, terminal, and chess clock.
 - **Offline Opening Recognition** — identify named openings and ECO codes as the game develops.
 - **Stockfish optional for local play** — Hotseat, history, PGN, and opening lookup work without an engine.
+- **One-command terminal launch** — after installing, type `terchess` from any directory; no desktop shortcut or manual navigation to the install folder is needed.
 - **Offline gameplay** after the initial Python dependency installation.
 
 ## Example session
@@ -53,11 +54,13 @@ Type moves like `e4`, `Nf3`, `O-O`, or coordinate notation such as `e2e4`. Your 
 ╰─────────────────────────────────────────────────────╯
 
 MAIN MENU
-  1 · Start game
+  1 · Play vs Stockfish
   2 · Display mode: Board view (toggle)
   3 · Settings
   4 · About Terchess
-  5 · Quit
+  5 · Hotseat (two players, one device)
+  6 · Game History (browse / PGN import / export)
+  7 · Quit
 
 Select option > 1
 Your move > e4
@@ -79,7 +82,7 @@ Download Stockfish from the [official Stockfish website](https://stockfishchess.
 
 ## One-command installation (recommended)
 
-Run the command for your operating system. The installer downloads the latest stable Terchess release, prepares the app folder, and launches Terchess. On first install it creates a private Python environment. On repeat installs it preserves the existing `.venv`, checks declared dependencies, and refreshes the Terchess package without rebuilding that environment.
+Run the command for your operating system. The installer downloads the latest stable Terchess release, prepares the app folder, installs Python dependencies, registers a `terchess` terminal command, and launches the game. After installation, type `terchess` from any directory to start it again. No desktop shortcut or manual search for the app folder is required. On repeat installs, the installer preserves the existing `.venv`, checks declared dependencies, and refreshes the Terchess package without rebuilding that environment.
 
 **Windows — PowerShell:**
 
@@ -103,9 +106,20 @@ The installers try to install Python and Stockfish through the operating system'
 
 **Security note:** these commands download and run an installer from this repository. If you prefer to inspect it first, open [install.ps1](install.ps1), [install-macos.sh](install-macos.sh), or [install-linux.sh](install-linux.sh) and review the script before running it.
 
+After installation, launch Terchess directly from your terminal:
+
+```console
+terchess
+terchess --version
+```
+
+The Windows installer adds `%LOCALAPPDATA%\\Programs\\Terchess` to your user PATH and updates the current PowerShell session, so the command works immediately. Linux and macOS installers create `~/.local/bin/terchess` and add `~/.local/bin` to the detected shell's startup file. Open a new terminal once so it loads the PATH change; in an already-open Bash or Zsh terminal, run `export PATH="$HOME/.local/bin:$PATH"`.
+
+The one-command installers provide this terminal command. When installing manually from the ZIP, activate the project's `.venv` first; `terchess` is then available in that activated environment.
+
 ---
 
-Terchess is a **Python terminal application**, not a standalone Windows `.exe`. The same source ZIP works on Windows, macOS, and Linux. You extract it, install its Python dependencies into a virtual environment, and run it from a terminal.
+Terchess is a **Python terminal application**, not a standalone Windows `.exe`. The same source ZIP works on Windows, macOS, and Linux. The one-command installers set up a user-level `terchess` command; the manual ZIP route below lets you keep the project wherever you extracted it and launch it from its local virtual environment.
 
 ### What you need first
 
@@ -123,9 +137,9 @@ Download **[Terchess-1.1.0.zip](https://github.com/MaybeSobi/Terchess/releases/d
 
 After extraction, you should have a folder named `Terchess-1.1.0`. Open a terminal **inside that folder**. The project root is the folder containing `pyproject.toml` and the `src` directory. The `cd` examples below assume you extracted it into Downloads; adjust the path if you chose another location.
 
-### Quick launch — recommended
+### Quick launch — manually extracted ZIP
 
-After extracting the ZIP, you can launch Terchess with the script for your operating system. **You only need to double-click the launcher after Python is installed.** On the first launch, it creates a local `.venv` folder and installs Terchess's Python dependencies automatically. Later launches reuse that environment and start the game directly.
+After extracting the ZIP, you can launch Terchess with the script for your operating system. You can double-click the launcher after Python is installed, or run it from the terminal. On the first launch, it creates a local `.venv` folder and installs Terchess's Python dependencies automatically. Later launches reuse that environment and start the game directly.
 
 - **Windows:** double-click `run_terchess.bat`.
 - **macOS:** double-click `run_terchess.command`; it opens Terminal and runs Terchess.
@@ -351,11 +365,11 @@ With the virtual environment active, run:
 python -m pytest
 ```
 
-The stable `v1.1.0` release includes one-click launch scripts for Windows, macOS, and Linux. GitHub Actions tests Python 3.10–3.13 on all three operating systems. The [release checklist](RELEASE_CHECKLIST.md) remains useful when testing future changes.
+The stable `v1.1.0` release includes local SQLite game history, PGN import/export and replay, Hotseat multiplayer, offline ECO opening recognition, and lazy Stockfish startup. The one-command installers also register the `terchess` terminal command on Windows, macOS, and Linux. GitHub Actions tests Python 3.10–3.13 on all three operating systems. The [release checklist](RELEASE_CHECKLIST.md) remains useful when testing future changes.
 
 ## Roadmap
 
-### `1.1.0` — One-click launchers · **Released 2026-10-16**
+### `1.0.2` — One-click launchers · **Released 2026-10-16**
 
 Add launch scripts for Windows, macOS, and Linux that create a private Python environment and install application dependencies on first run.
 

@@ -7,14 +7,14 @@ function Write-Warn($Message) { Write-Host "[Terchess] $Message" -ForegroundColo
 function Get-PythonCommand {
     if (Get-Command py -ErrorAction SilentlyContinue) {
         try {
-            & py -3 -c "import sys; raise SystemExit(0 if sys.version_info -ge (3,10) else 1)" 2>$null
+            & py -3 -c "import sys; raise SystemExit(0 if sys.version_info >= (3,10) else 1)" 2>$null
             if ($LASTEXITCODE -eq 0) { return "py" }
         } catch {}
     }
 
     if (Get-Command python -ErrorAction SilentlyContinue) {
         try {
-            & python -c "import sys; raise SystemExit(0 if sys.version_info -ge (3,10) else 1)" 2>$null
+            & python -c "import sys; raise SystemExit(0 if sys.version_info >= (3,10) else 1)" 2>$null
             if ($LASTEXITCODE -eq 0) { return "python" }
         } catch {}
     }

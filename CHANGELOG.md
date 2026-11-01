@@ -2,6 +2,11 @@
 
 All notable changes to Terchess are documented here.
 
+## [Unreleased]
+
+- Fix the Windows installer so it detects and reuses existing Stockfish executables (including manual builds under `C:\\Engines`) before attempting a WinGet installation.
+- Save the detected Stockfish executable path into Terchess user settings for first launch.
+
 ## [1.1.0] — 2026-11-01
 
 - Add automatic local game history backed by SQLite, including game metadata and stored PGN.

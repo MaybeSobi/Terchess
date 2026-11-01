@@ -99,7 +99,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/inst
 bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/install-linux.sh)
 ```
 
-The installers try to install Python and Stockfish through the operating system's package manager where possible. On Windows, Python is installed through WinGet when available; Stockfish may still need to be downloaded manually. If Stockfish is not detected, download it from the [official Stockfish website](https://stockfishchess.org/download/) and select its executable in Terchess Settings.
+The installers try to install Python and Stockfish through the operating system's package manager where possible. On Windows, Python is installed through WinGet when available. The PowerShell installer first checks PATH and common manual-install folders (including C:\\Engines) for a working Stockfish executable; it only uses WinGet if no existing engine can be found. When the Windows installer detects an existing Stockfish executable, it saves that full path in Terchess settings so the engine is ready at first launch. If no working engine is detected, download it from the [official Stockfish website](https://stockfishchess.org/download/) and select its executable in Terchess Settings.
 
 **Security note:** these commands download and run an installer from this repository. If you prefer to inspect it first, open [install.ps1](install.ps1), [install-macos.sh](install-macos.sh), or [install-linux.sh](install-linux.sh) and review the script before running it.
 

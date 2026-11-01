@@ -62,6 +62,10 @@ source .venv/bin/activate
 python -m pip install .
 ```
 
+## Windows installer does not detect an existing Stockfish build
+
+The PowerShell installer checks Stockfish on PATH, common install locations, and executable files under `C:\\Engines`. It validates candidates with a UCI handshake and stores a working executable path in `%APPDATA%\\Terchess\\config.json`. If your engine is in a different folder, add that folder to PATH or select the executable when Terchess asks for it.
+
 ## Stockfish cannot be found
 
 Stockfish is a separate executable and is not bundled in the Terchess ZIP.

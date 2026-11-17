@@ -37,7 +37,7 @@ Type moves like `e4`, `Nf3`, `O-O`, or coordinate notation such as `e2e4`. Your 
 - **Live chess clocks** — time controls with increment presets such as `3+2`.
 - **Numbered move history** during the current game.
 - **Persistent settings** — remember engine path, side, time control, skill level, and display mode.
-- **Cross-platform Python CLI** — designed for Windows, macOS, Linux, and Android through Termux. One-command installers register `terchess` so it can be launched from any terminal directory.
+- **Cross-platform Python CLI** — designed for Windows, macOS, Linux, and Android through Termux. Termux uses a compact portrait-friendly board, inline clocks, and a short move history to fit a phone screen. One-command installers register `terchess` so it can be launched from any terminal directory.
 - **Game History** — completed games are stored automatically in a local SQLite database.
 - **PGN import/export** — bring in existing games or export one game and your full collection.
 - **Hotseat multiplayer** — two players can share one computer, terminal, and chess clock.

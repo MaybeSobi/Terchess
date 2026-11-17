@@ -13,7 +13,7 @@ from prompt_toolkit.styles import Style
 from rich.console import Console
 from rich.panel import Panel
 
-from terchess.board_view import move_history, render_position, render_text_position
+from terchess.board_view import is_termux, move_history, render_position, render_text_position
 from terchess.clock import ChessClock, ClockExpired, color_name, format_clock
 from terchess.engine import configure_skill_level
 from terchess.history import save_game
@@ -78,10 +78,15 @@ async def _clocked_prompt(
     prompt_label: str = "Your move > ",
 ) -> str:
     """Read a move while repainting the clock and abort when the flag falls."""
+    prompt_options = {}
+    if not is_termux():
+        prompt_options = {
+            "bottom_toolbar": lambda: _clock_toolbar(clock),
+            "refresh_interval": 0.25,
+        }
     prompt_task = asyncio.create_task(session.prompt_async(
         [("class:prompt", prompt_label)],
-        bottom_toolbar=lambda: _clock_toolbar(clock),
-        refresh_interval=0.25,
+        **prompt_options,
     ))
     try:
         while not prompt_task.done():
@@ -123,7 +128,7 @@ async def play_game(
     board = chess.Board()
     clock = ChessClock(base_seconds, increment_seconds)
     time_control_name = _format_clock_label(base_seconds, increment_seconds)
-    session: PromptSession[str] = PromptSession(style=PROMPT_STYLE, refresh_interval=0.25)
+    session: PromptSession[str] = PromptSession(style=PROMPT_STYLE, refresh_interval=None if is_termux() else 0.25)
     console.print(Panel(
         ("Enter SAN moves like [bold]e4[/bold], [bold]Nf3[/bold], [bold]O-O[/bold], or coordinates like [bold]e2e4[/bold].\n"
          "Your clock runs while you think. Both clocks update in the toolbar.\n"
@@ -179,7 +184,8 @@ async def play_game(
                 opening_name = format_opening(identify_opening(board))
                 notice = f"[green]You played {san}[/green]"
         else:
-            console.print("[yellow]Stockfish is thinking... (clock is running)[/yellow]")
+            if not is_termux():
+                console.print("[yellow]Stockfish is thinking... (clock is running)[/yellow]")
             remaining = clock.remaining(side)
             engine_budget = max(0.01, min(ENGINE_MOVE_SECONDS, remaining * 0.9))
             result = engine.play(board, chess.engine.Limit(time=engine_budget))

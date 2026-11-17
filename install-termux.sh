@@ -13,7 +13,7 @@ fail() { printf '\033[1;31m[Terchess]\033[0m %s\n' "$*" >&2; exit 1; }
 
 # Termux exposes its own prefix and pkg command. Do not mistake Android's
 # Linux kernel and apt compatibility wrapper for a desktop Linux distro.
-if [[ -z "\${PREFIX:-}" || "$PREFIX" != */com.termux/files/usr ]]; then
+if [[ -z "${PREFIX:-}" || "$PREFIX" != */com.termux/files/usr ]]; then
   fail "This installer must be run inside the Termux app."
 fi
 if [[ ! -x "$PREFIX/bin/pkg" ]] || ! command -v pkg >/dev/null 2>&1; then
@@ -42,7 +42,7 @@ if ! command -v stockfish >/dev/null 2>&1; then
 fi
 
 info "Downloading Terchess from the current main branch..."
-curl -fL --retry 2 "https://codeload.github.com/\${REPO}/zip/refs/heads/main" -o "$TMP_DIR/Terchess-main.zip"
+curl -fL --retry 2 "https://codeload.github.com/${REPO}/zip/refs/heads/main" -o "$TMP_DIR/Terchess-main.zip"
 mkdir -p "$TMP_DIR/extract"
 unzip -q "$TMP_DIR/Terchess-main.zip" -d "$TMP_DIR/extract"
 PROJECT_FILE="$(find "$TMP_DIR/extract" -name pyproject.toml -type f -print -quit)"

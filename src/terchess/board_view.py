@@ -67,7 +67,11 @@ def _render_termux_position(
     if opening_name:
         console.print(Text(f"Opening: {opening_name}", style="cyan"))
     if notice:
-        console.print(f"Status: {notice}")
+        mobile_notice = (
+            f"Recent moves: {_compact_history(board, max_plies=12)}"
+            if notice == move_history(board) else notice
+        )
+        console.print(f"Status: {mobile_notice}")
     console.print(Text("SAN/UCI move · help · moves · resign · menu", style="dim"))
 
 
@@ -246,7 +250,11 @@ def render_text_position(
         if opening_name:
             console.print(Text(f"Opening: {opening_name}", style="cyan"))
         if notice:
-            console.print(f"Latest: {notice}")
+            mobile_notice = (
+                f"Recent moves: {_compact_history(board, max_plies=12)}"
+                if notice == move_history(board) else notice
+            )
+            console.print(f"Latest: {mobile_notice}")
         console.print(Text("SAN/UCI move · help · moves · resign · menu", style="dim"))
         return
     side_name = color_name(human_color)

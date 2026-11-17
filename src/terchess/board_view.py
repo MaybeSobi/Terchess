@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 import chess
 from rich.console import Console, Group
 from rich.panel import Panel
@@ -13,6 +15,61 @@ from terchess.clock import ChessClock, color_name, format_clock
 LIGHT_SQUARE = "#F0D9B5"
 DARK_SQUARE = "#B58863"
 LAST_MOVE_SQUARE = "#E6E36A"
+
+
+def is_termux() -> bool:
+    """Return True when running inside the native Android Termux environment."""
+    prefix = os.environ.get("PREFIX", "")
+    return bool(os.environ.get("TERMUX_VERSION")) or prefix.endswith("/com.termux/files/usr")
+
+
+def _compact_history(board: chess.Board, max_plies: int = 6) -> str:
+    """Return only the most recent moves for small terminal screens."""
+    if not board.move_stack:
+        return "No moves yet"
+    replay = chess.Board()
+    tokens: list[str] = []
+    start = max(0, len(board.move_stack) - max_plies)
+    for move in board.move_stack:
+        san = replay.san(move)
+        if replay.turn == chess.WHITE:
+            tokens.append(f"{replay.fullmove_number}. {san}")
+        else:
+            tokens.append(san)
+        replay.push(move)
+    return " ".join(tokens[start:])
+
+
+def _render_termux_position(
+    console: Console,
+    board: chess.Board,
+    human_color: chess.Color,
+    skill_level: int | None,
+    clock: ChessClock,
+    time_control_name: str,
+    notice: str | None,
+    opening_name: str | None,
+    game_label: str | None,
+) -> None:
+    """Render a short, borderless screen that fits a portrait phone terminal."""
+    side_name = color_name(human_color)
+    mode = game_label or (f"Skill {skill_level}/20" if skill_level is not None else "Local game")
+    console.print(Text(f"TERCHESS · {side_name} · {mode} · {time_control_name}", style="bold bright_white"))
+    console.print(board_table(board, human_color))
+    clock_line = Text("Clock  ")
+    for color in (chess.WHITE, chess.BLACK):
+        active = clock.running_color == color
+        style = "bold bright_green" if active else "bold bright_white"
+        prefix = "▶ " if active else ""
+        clock_line.append(f"{prefix}{color_name(color)} {format_clock(clock.remaining(color))}   ", style=style)
+    console.print(clock_line)
+    console.print(Text(f"Moves: {_compact_history(board)}", style="bright_cyan"))
+    if opening_name:
+        console.print(Text(f"Opening: {opening_name}", style="cyan"))
+    if notice:
+        console.print(f"Status: {notice}")
+    console.print(Text("SAN/UCI move · help · moves · resign · menu", style="dim"))
+
 
 
 def board_table(board: chess.Board, human_color: chess.Color) -> Table:
@@ -105,6 +162,12 @@ def render_position(
 ) -> None:
     """Clear and render the board plus a live-clock snapshot and move history."""
     console.clear()
+    if is_termux():
+        _render_termux_position(
+            console, board, human_color, skill_level, clock, time_control_name,
+            notice, opening_name, game_label,
+        )
+        return
     side_name = color_name(human_color)
     turn_name = f"{color_name(board.turn)} to move"
     header = Text(
@@ -167,6 +230,25 @@ def render_text_position(
 ) -> None:
     """Render a blindfold/text-only game screen without a chessboard diagram."""
     console.clear()
+    if is_termux():
+        mode = game_label or f"You: {color_name(human_color)} · Stockfish: {color_name(not human_color)}"
+        console.print(Text(f"TERCHESS · BLINDFOLD · {mode} · {time_control_name}", style="bold bright_green"))
+        clock_line = Text("Clock  ")
+        for color in (chess.WHITE, chess.BLACK):
+            active = clock.running_color == color
+            clock_line.append(
+                f"{'▶ ' if active else ''}{color_name(color)} {format_clock(clock.remaining(color))}   ",
+                style="bold bright_green" if active else "bold bright_white",
+            )
+        console.print(clock_line)
+        console.print(Text(f"Moves: {_compact_history(board, max_plies=8)}", style="bright_cyan"))
+        console.print(Text(f"Status: {color_name(board.turn)} to move", style="yellow"))
+        if opening_name:
+            console.print(Text(f"Opening: {opening_name}", style="cyan"))
+        if notice:
+            console.print(f"Latest: {notice}")
+        console.print(Text("SAN/UCI move · help · moves · resign · menu", style="dim"))
+        return
     side_name = color_name(human_color)
     engine_color = color_name(not human_color)
     turn_name = f"{color_name(board.turn)} to move"

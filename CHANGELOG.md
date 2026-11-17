@@ -4,6 +4,9 @@ All notable changes to Terchess are documented here.
 
 ## [Unreleased]
 
+- Add a compact portrait-first Termux game screen with a borderless board, inline clocks, and a short recent-move list.
+- Disable the live prompt toolbar refresh in Termux to prevent prompt-toolkit redraws from interfering with board repainting; desktop rendering remains unchanged.
+
 - Register a user-level `terchess` terminal command from one-command installers on Windows, Linux, and macOS.
 - Persist the command location in the user's PATH and forward CLI arguments through the platform launchers.
 - Refresh the README's quick-install guidance, current feature list, and roadmap descriptions.

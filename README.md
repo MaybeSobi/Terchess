@@ -6,11 +6,11 @@
 
 **Your terminal. Your board. Your imagination.**
 
-An offline-first, keyboard-first chess application for Windows, macOS, and Linux. Play a local Stockfish engine, challenge a friend in timed Hotseat games, review and replay games from a SQLite history, import or export PGN files, and recognize openings with an offline ECO database — all from your terminal.
+An offline-first, keyboard-first chess application for Windows, macOS, Linux, and Android (via Termux). Play a local Stockfish engine, challenge a friend in timed Hotseat games, review and replay games from a SQLite history, import or export PGN files, and recognize openings with an offline ECO database — all from your terminal.
 
 [![CI](https://github.com/MaybeSobi/Terchess/actions/workflows/ci.yml/badge.svg)](https://github.com/MaybeSobi/Terchess/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-444444)](#installation)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android%20via%20Termux-444444)](#installation)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](LICENSE)
 
 </div>
@@ -37,7 +37,7 @@ Type moves like `e4`, `Nf3`, `O-O`, or coordinate notation such as `e2e4`. Your 
 - **Live chess clocks** — time controls with increment presets such as `3+2`.
 - **Numbered move history** during the current game.
 - **Persistent settings** — remember engine path, side, time control, skill level, and display mode.
-- **Cross-platform Python CLI** — designed for Windows, macOS, and Linux. One-command installers register `terchess` so it can be launched from any terminal directory.
+- **Cross-platform Python CLI** — designed for Windows, macOS, Linux, and Android through Termux. One-command installers register `terchess` so it can be launched from any terminal directory.
 - **Game History** — completed games are stored automatically in a local SQLite database.
 - **PGN import/export** — bring in existing games or export one game and your full collection.
 - **Hotseat multiplayer** — two players can share one computer, terminal, and chess clock.
@@ -102,9 +102,17 @@ bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/inst
 bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/install-linux.sh)
 ```
 
+**Android — Termux** (native ARM/ARM64 environment; no root, sudo, Ubuntu, or Kali required):
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/install-termux.sh)
+```
+
+The Termux installer uses `pkg`, installs the app from the current `main` branch, creates a private Python environment, and registers `terchess` in Termux's `$PREFIX/bin`. It checks for Stockfish and attempts to install it with `pkg` when it is missing. Use this installer inside Termux; **do not use `install-linux.sh` on Android/Termux**, because the Linux installer expects a conventional distribution package manager and may request root privileges.
+
 The installers try to install Python and Stockfish through the operating system's package manager where possible. On Windows, Python is installed through WinGet when available. The Windows installer checks PATH and common manual-install folders (including C:\\Engines) before trying WinGet; Linux and macOS installers check the `stockfish` command on PATH. A detected engine must complete a UCI handshake and expose the full UCI `Skill Level` range (0–20) before its path is saved. The installer updates only `stockfish_path` in a valid JSON settings object, preserving other preferences; malformed or non-object settings files are left untouched. If no compatible engine is detected, download Stockfish from the [official website](https://stockfishchess.org/download/) and select its executable in Terchess Settings.
 
-**Security note:** these commands download and run an installer from this repository. If you prefer to inspect it first, open [install.ps1](install.ps1), [install-macos.sh](install-macos.sh), or [install-linux.sh](install-linux.sh) and review the script before running it.
+**Security note:** these commands download and run an installer from this repository. If you prefer to inspect it first, open [install.ps1](install.ps1), [install-macos.sh](install-macos.sh), [install-linux.sh](install-linux.sh), or [install-termux.sh](install-termux.sh) and review the script before running it.
 
 After installation, launch Terchess directly from your terminal:
 
@@ -113,13 +121,13 @@ terchess
 terchess --version
 ```
 
-The Windows installer adds `%LOCALAPPDATA%\Programs\Terchess` to your user PATH and updates the current PowerShell session, so the command works immediately. Linux and macOS installers create `~/.local/bin/terchess` and add `~/.local/bin` to the detected shell's startup file. Open a new terminal once so it loads the PATH change; in an already-open Bash or Zsh terminal, run `export PATH="$HOME/.local/bin:$PATH"`.
+The Windows installer adds `%LOCALAPPDATA%\Programs\Terchess` to your user PATH and updates the current PowerShell session, so the command works immediately. Linux and macOS installers create `~/.local/bin/terchess` and add `~/.local/bin` to the detected shell's startup file. The Termux installer places the command in `$PREFIX/bin`, which is already on Termux's PATH. Open a new terminal once so it loads the PATH change; in an already-open Bash or Zsh terminal, run `export PATH="$HOME/.local/bin:$PATH"`.
 
 The one-command installers provide this terminal command. When installing manually from the ZIP, activate the project's `.venv` first; `terchess` is then available in that activated environment.
 
 ---
 
-Terchess is a **Python terminal application**, not a standalone Windows `.exe`. The same source ZIP works on Windows, macOS, and Linux. The one-command installers set up a user-level `terchess` command; the manual ZIP route below lets you keep the project wherever you extracted it and launch it from its local virtual environment.
+Terchess is a **Python terminal application**, not a standalone Windows `.exe`. The same source ZIP works on Windows, macOS, and Linux; Android users should use the dedicated Termux installer above. The one-command installers set up a user-level `terchess` command; the manual ZIP route below lets you keep the project wherever you extracted it and launch it from its local virtual environment.
 
 ### What you need first
 
@@ -365,7 +373,7 @@ With the virtual environment active, run:
 python -m pytest
 ```
 
-The stable `v1.1.0` release includes local SQLite game history, PGN import/export and replay, Hotseat multiplayer, offline ECO opening recognition, and lazy Stockfish startup. The one-command installers also register the `terchess` terminal command on Windows, macOS, and Linux. GitHub Actions tests Python 3.10–3.13 on all three operating systems. The [release checklist](RELEASE_CHECKLIST.md) remains useful when testing future changes.
+The stable `v1.1.0` release includes local SQLite game history, PGN import/export and replay, Hotseat multiplayer, offline ECO opening recognition, and lazy Stockfish startup. The one-command installers also register the `terchess` terminal command on Windows, macOS, Linux, and Android via Termux. GitHub Actions tests Python 3.10–3.13 on Windows, macOS, and Linux; the Termux installer is syntax-checked in CI, while Android runtime compatibility is validated on-device. The [release checklist](RELEASE_CHECKLIST.md) remains useful when testing future changes.
 
 ## Roadmap
 

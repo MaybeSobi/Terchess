@@ -1,0 +1,342 @@
+# Installation and User Guide
+
+This guide covers installation, first launch, platform-specific setup, Stockfish configuration, game history, controls, and testing.
+
+For a quick overview of Terchess, see the [README](README.md).
+
+---
+
+## Installation
+
+## One-command installation (recommended)
+
+Run the command for your operating system. The installer downloads the latest stable Terchess release, prepares the app folder, installs Python dependencies, registers a `terchess` terminal command, and launches the game. After installation, type `terchess` from any directory to start it again. No desktop shortcut or manual search for the app folder is required. On repeat installs, the installer preserves the existing `.venv`, checks declared dependencies, and refreshes the Terchess package without rebuilding that environment.
+
+**Windows — PowerShell:**
+
+```powershell
+irm https://raw.githubusercontent.com/MaybeSobi/Terchess/main/install.ps1 | iex
+```
+
+**macOS — Terminal** (requires Homebrew; the installer uses it to install/check Python and Stockfish):
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/install-macos.sh)
+```
+
+**Linux — Terminal** (supports APT, DNF, pacman, and zypper; package installation may ask for your sudo password):
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/install-linux.sh)
+```
+
+**Android — Termux** (native ARM/ARM64 environment; no root, sudo, Ubuntu, or Kali required):
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/install-termux.sh)
+```
+
+The Termux installer uses `pkg`, installs the app from the current `main` branch, creates a private Python environment, and registers `terchess` in Termux's `$PREFIX/bin`. It checks for Stockfish and attempts to install it with `pkg` when it is missing. Use this installer inside Termux; **do not use `install-linux.sh` on Android/Termux**, because the Linux installer expects a conventional distribution package manager and may request root privileges.
+
+The installers try to install Python and Stockfish through the operating system's package manager where possible. On Windows, Python is installed through WinGet when available. The Windows installer checks PATH and common manual-install folders (including C:\\Engines) before trying WinGet; Linux and macOS installers check the `stockfish` command on PATH. A detected engine must complete a UCI handshake and expose the full UCI `Skill Level` range (0–20) before its path is saved. The installer updates only `stockfish_path` in a valid JSON settings object, preserving other preferences; malformed or non-object settings files are left untouched. If no compatible engine is detected, download Stockfish from the [official website](https://stockfishchess.org/download/) and select its executable in Terchess Settings.
+
+**Security note:** these commands download and run an installer from this repository. If you prefer to inspect it first, open [install.ps1](install.ps1), [install-macos.sh](install-macos.sh), [install-linux.sh](install-linux.sh), or [install-termux.sh](install-termux.sh) and review the script before running it.
+
+After installation, launch Terchess directly from your terminal:
+
+```console
+terchess
+terchess --version
+```
+
+The Windows installer adds `%LOCALAPPDATA%\Programs\Terchess` to your user PATH and updates the current PowerShell session, so the command works immediately. Linux and macOS installers create `~/.local/bin/terchess` and add `~/.local/bin` to the detected shell's startup file. The Termux installer places the command in `$PREFIX/bin`, which is already on Termux's PATH. Open a new terminal once so it loads the PATH change; in an already-open Bash or Zsh terminal, run `export PATH="$HOME/.local/bin:$PATH"`.
+
+The one-command installers provide this terminal command. When installing manually from the ZIP, activate the project's `.venv` first; `terchess` is then available in that activated environment.
+
+---
+
+Terchess is a **Python terminal application**, not a standalone Windows `.exe`. The same source ZIP works on Windows, macOS, and Linux; Android users should use the dedicated Termux installer above. The one-command installers set up a user-level `terchess` command; the manual ZIP route below lets you keep the project wherever you extracted it and launch it from its local virtual environment.
+
+### What you need first
+
+1. **Python 3.10 or newer.** Download it from [python.org](https://www.python.org/downloads/). On macOS, use the [official macOS installer](https://www.python.org/downloads/macos/); on Windows, install the Python launcher (`py`) if offered and enable adding Python to PATH.
+2. **Stockfish**, installed separately. Terchess does not bundle the engine. Download it from the [official Stockfish page](https://stockfishchess.org/download/), or use Homebrew on macOS if the formula is available for your Mac.
+3. **Internet access for the initial Python dependency installation.** The commands below install `python-chess`, `rich`, and `prompt-toolkit` automatically; you do not need to fetch those libraries individually.
+
+### 1. Download and extract the ZIP
+
+Download **[Terchess-1.1.0.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.1.0/Terchess-1.1.0.zip)** from the [stable v1.1.0 release](https://github.com/MaybeSobi/Terchess/releases/tag/v1.1.0), then extract it.
+
+- **Windows:** In File Explorer, right-click the ZIP and choose **Extract All…**.
+- **macOS:** Double-click the ZIP in Finder; macOS extracts the folder beside it.
+- **Kali/Linux:** You can extract the ZIP with your file manager, or install and use `unzip` as shown below.
+
+After extraction, you should have a folder named `Terchess-1.1.0`. Open a terminal **inside that folder**. The project root is the folder containing `pyproject.toml` and the `src` directory. The `cd` examples below assume you extracted it into Downloads; adjust the path if you chose another location.
+
+### Quick launch — manually extracted ZIP
+
+After extracting the ZIP, you can launch Terchess with the script for your operating system. You can double-click the launcher after Python is installed, or run it from the terminal. On the first launch, it creates a local `.venv` folder and installs Terchess's Python dependencies automatically. Later launches reuse that environment and start the game directly.
+
+- **Windows:** double-click `run_terchess.bat`.
+- **macOS:** double-click `run_terchess.command`; it opens Terminal and runs Terchess.
+- **Kali/Linux:** double-click `run_terchess.sh`. If your file manager opens it as text instead, right-click and choose **Run in Terminal** or **Run as Program**. You can also launch it from a terminal with `./run_terchess.sh`.
+
+Before using a launcher, install **Python 3.10 or newer**. On Kali/Debian/Ubuntu, ensure `python3-venv` is installed; the manual setup below lists the required system packages. The first launch needs an internet connection to download Python dependencies.
+
+**Stockfish is still a separate one-time install.** The launcher does not install or bundle the chess engine. Install Stockfish for your operating system and select its executable in Terchess when asked. See the operating-system instructions below for the recommended method. If setup fails, the launcher leaves an error message in the terminal window.
+
+
+### 2. Windows — PowerShell
+
+First, open PowerShell and move into the extracted project folder:
+
+```powershell
+cd "$HOME\Downloads\Terchess-1.1.0"
+Get-ChildItem pyproject.toml
+```
+
+The second command should show `pyproject.toml`. If it says the file cannot be found, you are not in the project root; correct the `cd` path before continuing.
+
+Create a virtual environment, activate it, update pip, install Terchess and its required libraries, then launch the game:
+
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install .
+terchess
+```
+
+The first install downloads the libraries listed by the project automatically. You do **not** need to install each Python dependency one by one.
+
+**If PowerShell blocks activation:** open Command Prompt (CMD) and run these commands instead. The first path assumes the project is in your Downloads folder:
+
+```bat
+cd /d "%USERPROFILE%\Downloads\Terchess-1.1.0"
+py -3 -m venv .venv
+.venv\Scripts\activate.bat
+python -m pip install --upgrade pip
+python -m pip install .
+terchess
+```
+
+**Optional — development and tests:** If you want to edit Terchess or run its tests, use the development install instead of the normal install command above:
+
+```powershell
+python -m pip install -e ".[dev]"
+python -m pytest -q
+```
+
+The `[dev]` extra installs `pytest`; it is not required just to play.
+
+### 3. macOS — Terminal (Apple Silicon and Intel)
+
+#### Install Python and Stockfish
+
+1. Install **Python 3.10 or newer** using the [official macOS installer](https://www.python.org/downloads/macos/). Open Terminal and check the version:
+
+   ```bash
+   python3 --version
+   ```
+
+   It should report Python 3.10 or newer. If it reports an older version or the command is missing, complete the Python installer, close Terminal, open it again, and retry. Python 3.13 is one of the versions covered by this project's CI.
+
+2. Install **Stockfish** separately. If Homebrew is already installed, the quick option is:
+
+   ```bash
+   brew install stockfish
+   ```
+
+   If you do not have Homebrew, follow its official instructions at [brew.sh](https://brew.sh) and then run the command above. Alternatively, download a macOS build from the [official Stockfish download page](https://stockfishchess.org/download/). The official download is an alternative if the Homebrew package is unavailable for your macOS version or CPU.
+
+   Check whether Stockfish is on your command path:
+
+   ```bash
+   command -v stockfish
+   ```
+
+   If this prints nothing, you can enter the engine's full path in Terchess Settings when prompted.
+
+#### Download, extract, and enter the project directory
+
+Download [Terchess-1.1.0.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.1.0/Terchess-1.1.0.zip) from the [stable release page](https://github.com/MaybeSobi/Terchess/releases/tag/v1.1.0). In Finder, double-click the ZIP to extract it. If you saved it to Downloads, open Terminal and enter the extracted project folder:
+
+```bash
+cd "$HOME/Downloads/Terchess-1.1.0"
+ls pyproject.toml
+```
+
+The last command should show `pyproject.toml`. If the file is not found, adjust `cd` to the directory where you extracted the ZIP. You must be in the project root—the folder containing `pyproject.toml` and `src/`—before installing.
+
+#### Create the environment, install, and launch
+
+Run these commands from the project root:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install .
+terchess
+```
+
+The install command downloads the Python libraries required by Terchess automatically. You do not need to install `python-chess`, `rich`, or `prompt-toolkit` manually. Keep the `.venv` folder inside the project directory.
+
+For development or to run the test suite, install the optional development tools instead:
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pytest -q
+```
+
+When you open a new Terminal window later, return to the project directory and reactivate the environment:
+
+```bash
+cd "$HOME/Downloads/Terchess-1.1.0"
+source .venv/bin/activate
+terchess
+```
+
+### 4. Linux / Debian / Ubuntu
+
+Open a terminal. Install Python's virtual-environment tools and the Stockfish engine from your distribution's package manager:
+
+```bash
+sudo apt update
+sudo apt install -y python3-full python3-venv python3-pip unzip stockfish
+```
+
+Download `Terchess-1.1.0.zip` from the [releases page](https://github.com/MaybeSobi/Terchess/releases), then extract it. For a ZIP saved in Downloads, these commands make a Projects folder, extract the archive, and enter the project root:
+
+```bash
+mkdir -p ~/Projects
+unzip ~/Downloads/Terchess-1.1.0.zip -d ~/Projects
+cd ~/Projects/Terchess-1.1.0
+ls
+```
+
+Check that the listing includes `pyproject.toml` and `src`. Then create and activate a virtual environment, install the project, and launch it:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install .
+terchess
+```
+
+If you extracted the ZIP somewhere else, change the `cd` path to that folder. If your Kali/Debian repositories cannot find the `stockfish` package, install a Linux build from the [official Stockfish download page](https://stockfishchess.org/download/) and select its executable in Terchess.
+
+**Optional — development and tests:** From the project root with the virtual environment active:
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pytest -q
+```
+
+Do not use `sudo pip` or `--break-system-packages`. Keep the project's Python packages inside its `.venv` environment.
+
+### 5. Stockfish on first launch
+
+Terchess needs the Stockfish **engine executable** to play against the computer. Installing Terchess's Python libraries does not install Stockfish.
+
+- **Windows:** Download and extract Stockfish, then choose or enter the full path to its `.exe` when Terchess asks for the engine. The exact filename depends on the build you downloaded.
+- **macOS:** With Homebrew, the command is normally `stockfish`; check it using `command -v stockfish`. If Terchess does not detect it, choose the executable in Settings or pass its full path.
+- **Kali/Linux:** The package-manager install above usually makes the executable available as `stockfish`. If Terchess does not detect it, choose its path or provide the executable path in Terchess settings.
+
+After installation, keep the `.venv` folder with the project. When opening a new terminal later, `cd` back into the project folder, activate the virtual environment (` .\.venv\Scripts\Activate.ps1` on PowerShell or `source .venv/bin/activate` on macOS/Linux), and run `terchess` again.
+
+## First launch
+
+1. Run `terchess`.
+2. If Stockfish is not detected, enter the path to its executable.
+3. Choose **Start game**.
+4. In **Settings**, choose your side, time control, and Stockfish Skill Level from `0` to `20`.
+5. Open **Game History** to browse/replay saved games and import or export PGN files.
+6. Use **Display mode** to toggle Board View / Blindfold text-only mode.
+
+## Game History and PGN
+
+Terchess automatically saves completed Stockfish and Hotseat games to a local SQLite database. The History menu lets you inspect game metadata, replay the move list, import standard PGN files, and export a selected game or your entire collection. The database lives in your per-user data directory, not inside the project folder.
+
+## Hotseat
+
+Choose **Hotseat** from the main menu, enter White and Black player names, then select a time control. Both players use the same terminal and chess clock. Use `resign` to resign or `menu` to abandon the current game and return to the main menu.
+
+## Opening Recognition
+
+Terchess identifies named openings and ECO codes offline as moves are played. The bundled reference data is derived from the CC0 Lichess chess-openings dataset; no network connection is used for recognition. Opening names are also saved to PGN headers when identified.
+
+Settings are stored outside the project directory and persist across restarts:
+
+- **Windows:** `%APPDATA%\Terchess\config.json`
+- **Linux:** `$XDG_CONFIG_HOME/terchess/config.json`, or `~/.config/terchess/config.json`
+- **macOS:** `~/Library/Application Support/Terchess/config.json`
+
+Override the saved engine path for one run:
+
+```bash
+terchess --engine /path/to/stockfish
+```
+
+On Windows, provide the full path to the Stockfish `.exe`.
+
+## Controls
+
+| Input | Action |
+|---|---|
+| `e4`, `Nf3`, `Qxd5` | Enter a move in SAN notation |
+| `e2e4` | Enter a coordinate move |
+| `O-O`, `0-0` | Castle kingside |
+| `help` | Show move-entry help |
+| `moves` | Print move history |
+| `resign` | Resign the current game |
+| `menu` | Return to the main menu |
+
+## Tests
+
+With the virtual environment active, run:
+
+```bash
+python -m pytest
+```
+
+The stable `v1.1.0` release includes local SQLite game history, PGN import/export and replay, Hotseat multiplayer, offline ECO opening recognition, and lazy Stockfish startup. The one-command installers also register the `terchess` terminal command on Windows, macOS, Linux, and Android via Termux. GitHub Actions tests Python 3.10–3.13 on Windows, macOS, and Linux; the Termux installer is syntax-checked in CI, while Android runtime compatibility is validated on-device. The [release checklist](RELEASE_CHECKLIST.md) remains useful when testing future changes.
+
+## Roadmap
+
+### `1.3.0` — Stockfish analysis · Planned
+
+- Evaluation bar and best-move suggestions.
+- Mistake and blunder recognition.
+
+### `1.2.0` — LAN multiplayer · Planned
+
+- Host/join over a local network.
+- Synchronized clocks, disconnect handling, and rematches.
+
+### `1.1.0` — Game history, Hotseat + opening recognition · **Released 2026-11-01**
+
+- SQLite local game history, PGN import/export, and move replay.
+- Two-player Hotseat with names and chess clocks.
+- Offline ECO opening recognition and lazy Stockfish startup.
+
+### `1.0.2` — One-click launchers · **Released 2026-10-16**
+
+- Launch scripts for Windows, macOS, and Linux.
+- Private Python environment and dependency installation on first launch.
+
+### `1.0.1` — macOS support · **Released 2026-10-16**
+
+- Step-by-step macOS setup and Stockfish installation guidance.
+- Automated macOS CI coverage for Python 3.10–3.13.
+
+### `1.0.0` — Stable offline release · **Released 2026-10-16**
+
+- Local Stockfish gameplay, Board View / Blindfold mode, clocks, legal move validation, persistent settings, and cross-platform setup.
+
+## Additional help
+
+- [Troubleshooting](TROUBLESHOOTING.md)
+- [Roadmap](ROADMAP.md)
+- [Changelog](CHANGELOG.md)

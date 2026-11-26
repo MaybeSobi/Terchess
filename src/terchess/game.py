@@ -98,6 +98,9 @@ async def _clocked_prompt(
         ))
         resized = False
         try:
+            # Let prompt_toolkit enter its application before checking for a
+            # resize, otherwise a very fast resize could cancel an unstarted task.
+            await asyncio.sleep(0)
             while not prompt_task.done():
                 if clock.is_flagged(color):
                     prompt_task.cancel()

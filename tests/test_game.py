@@ -139,4 +139,3 @@ def test_board_size_setting_is_saved_and_loaded():
     restored = _settings_from_config(saved)
 
     assert restored.board_scale == "large"
-\n

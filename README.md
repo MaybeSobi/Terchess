@@ -79,7 +79,10 @@ After installation, launch Terchess from any terminal:
 ```console
 terchess
 terchess --version
+terchess --choose-engine
 ```
+
+Use `terchess --choose-engine` to reopen the Stockfish selector after you have remembered a preferred engine.
 
 > **Engine:** One-command installers discover existing Stockfish binaries first, verify their UCI version and Skill Level range, and offer an update or side-by-side installation when needed. New downloads are verified against the official SHA-256 digest. Manual ZIP installs still require a separate Stockfish download.\n>\n> **Security:** These commands download and execute an installer from this repository. You can inspect the scripts in the repository before running them. Use the dedicated Termux installer on Android; do not use the standard Linux installer inside Termux.
 

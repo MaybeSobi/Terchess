@@ -114,8 +114,15 @@ info "Searching for existing Stockfish engines and checking for updates build...
 curl -fsSL "https://raw.githubusercontent.com/MaybeSobi/Terchess/main/scripts/install_stockfish.py" -o "$TMP_DIR/install_stockfish.py"
 python3 "$TMP_DIR/install_stockfish.py"
 
-info "Finding the latest stable release..."
-ASSET_URL="$(python3 - "$REPO" <<'PY'
+CHANNEL="${1:-main}"
+case "$CHANNEL" in
+  main)
+    SOURCE_URL="https://codeload.github.com/${REPO}/zip/refs/heads/main"
+    ARCHIVE_NAME="Terchess-main.zip"
+    ;;
+  release)
+    info "Finding the latest stable release..."
+    SOURCE_URL="$(python3 - "$REPO" <<'PY'
 import json, sys, urllib.request
 repo = sys.argv[1]
 req = urllib.request.Request(
@@ -130,11 +137,18 @@ if not assets:
 print(assets[0]["browser_download_url"])
 PY
 )"
+    ARCHIVE_NAME="Terchess-release.zip"
+    ;;
+  *)
+    echo "Usage: $0 [main|release]"
+    exit 2
+    ;;
+esac
 
-info "Downloading Terchess..."
-curl -fL "$ASSET_URL" -o "$TMP_DIR/Terchess.zip"
+info "Downloading Terchess from the $CHANNEL channel..."
+curl -fL --retry 2 "$SOURCE_URL" -o "$TMP_DIR/$ARCHIVE_NAME"
 mkdir "$TMP_DIR/extract"
-ditto -x -k "$TMP_DIR/Terchess.zip" "$TMP_DIR/extract"
+ditto -x -k "$TMP_DIR/$ARCHIVE_NAME" "$TMP_DIR/extract"
 PROJECT_FILE="$(find "$TMP_DIR/extract" -name pyproject.toml -type f -print -quit)"
 if [[ -z "$PROJECT_FILE" ]]; then
   echo "The downloaded archive does not contain pyproject.toml."

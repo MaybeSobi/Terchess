@@ -86,14 +86,15 @@ def test_large_piece_silhouettes_are_distinct_and_fill_the_cell() -> None:
     from terchess.board_view import _piece_cell_lines
 
     silhouettes = [
-        tuple(_piece_cell_lines(chess.Piece(piece_type, chess.WHITE), 7, 4))
+        tuple(_piece_cell_lines(chess.Piece(piece_type, color), 7, 4))
+        for color in (chess.WHITE, chess.BLACK)
         for piece_type in (
             chess.PAWN, chess.KNIGHT, chess.BISHOP,
             chess.ROOK, chess.QUEEN, chess.KING,
         )
     ]
 
-    assert len(set(silhouettes)) == 6
+    assert len(set(silhouettes)) == 12
     assert all(len(lines) == 4 for lines in silhouettes)
     assert all(len(line) == 7 for lines in silhouettes for line in lines)
 

@@ -23,6 +23,41 @@ LAST_MOVE_SQUARE = "#8D784C"
 WHITE_PIECE = "#FFF4DD"
 BLACK_PIECE = "#080808"
 
+# Muted, high-contrast palettes keep both white and black native piece glyphs
+# readable on every square while allowing the board colors to change.
+BOARD_THEMES: dict[str, dict[str, str]] = {
+    "classic": {
+        "label": "Classic Wood",
+        "light": LIGHT_SQUARE,
+        "dark": DARK_SQUARE,
+        "last_move": LAST_MOVE_SQUARE,
+    },
+    "green": {
+        "label": "White & Green",
+        "light": "#7D967E",
+        "dark": "#526F59",
+        "last_move": "#89764E",
+    },
+    "blue": {
+        "label": "White & Blue",
+        "light": "#7A93AD",
+        "dark": "#4C6680",
+        "last_move": "#817052",
+    },
+    "pink": {
+        "label": "White & Pink",
+        "light": "#AA7F90",
+        "dark": "#755363",
+        "last_move": "#96734F",
+    },
+    "purple": {
+        "label": "White & Purple",
+        "light": "#9686AD",
+        "dark": "#645A78",
+        "last_move": "#89764F",
+    },
+}
+
 
 def is_termux() -> bool:
     """Return True when running inside the native Android Termux environment."""
@@ -57,12 +92,13 @@ def _render_termux_position(
     notice: str | None,
     opening_name: str | None,
     game_label: str | None,
+    board_theme: str,
 ) -> None:
     """Render a short, borderless screen that fits a portrait phone terminal."""
     side_name = color_name(human_color)
     mode = game_label or (f"Skill {skill_level}/20" if skill_level is not None else "Local game")
     console.print(Text(f"TERCHESS · {side_name} · {mode} · {time_control_name}", style="bold bright_white"))
-    console.print(board_table(board, human_color))
+    console.print(board_table(board, human_color, board_theme=board_theme))
     clock_line = Text("Clock  ")
     for color in (chess.WHITE, chess.BLACK):
         active = clock.running_color == color
@@ -164,8 +200,15 @@ def board_table(
     human_color: chess.Color,
     cell_width: int = 2,
     cell_height: int = 1,
+    board_theme: str | None = None,
 ) -> Table:
     """Build a responsive colored board oriented from the human player's side."""
+    if board_theme is None:
+        board_theme = str(load_config().get("board_theme", "classic"))
+    theme = BOARD_THEMES.get(board_theme, BOARD_THEMES["classic"])
+    light_square = theme["light"]
+    dark_square = theme["dark"]
+    last_move_square = theme["last_move"]
     cell_width = max(1, int(cell_width))
     cell_height = max(1, int(cell_height))
     middle_row = cell_height // 2
@@ -190,7 +233,7 @@ def board_table(
                 square = chess.square(file_index, rank)
                 piece = board.piece_at(square)
                 is_light = (file_index + rank) % 2 == 1
-                background = LAST_MOVE_SQUARE if square in last_squares else (LIGHT_SQUARE if is_light else DARK_SQUARE)
+                background = last_move_square if square in last_squares else (light_square if is_light else dark_square)
                 if piece:
                     foreground, background = _piece_colors(piece, background)
                     style = f"bold {foreground} on {background}"
@@ -268,11 +311,13 @@ def render_position(
     game_label: str | None = None,
 ) -> None:
     """Clear and render the board plus a live-clock snapshot and move history."""
+    config = load_config()
+    board_theme = str(config.get("board_theme", "classic"))
     if is_termux():
         _clear_rendered_screen(console)
         _render_termux_position(
             console, board, human_color, skill_level, clock, time_control_name,
-            notice, opening_name, game_label,
+            notice, opening_name, game_label, board_theme,
         )
         return
 
@@ -292,13 +337,13 @@ def render_position(
     # windows use a compact one-column view so panels cannot spill below the
     # terminal and leave fragments behind.
     wide_layout = terminal_width >= 110 and terminal_height >= 32
-    board_scale = str(load_config().get("board_scale", "compact"))
+    board_scale = str(config.get("board_scale", "compact"))
     cell_width, cell_height = _board_cell_dimensions(
         terminal_width, terminal_height, wide_layout=wide_layout,
         board_scale=board_scale,
     )
     board_panel = Panel(
-        Align(board_table(board, human_color, cell_width, cell_height), align="center"),
+        Align(board_table(board, human_color, cell_width, cell_height, board_theme), align="center"),
         title=header,
         subtitle=(f"{opening_name} · Last move highlighted" if opening_name else "Last move highlighted"),
         border_style="bright_green",

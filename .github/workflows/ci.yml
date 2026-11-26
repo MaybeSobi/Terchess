@@ -34,7 +34,7 @@ jobs:
       - name: Install package and test dependencies
         run: python -m pip install -e ".[dev]"
       - name: Compile source
-        run: python -m compileall -q src
+        run: python -m compileall -q src install_stockfish.py
       - name: Smoke-test the terminal command
         run: python -m terchess --version
       - name: Validate Unix installers and launchers

@@ -244,15 +244,10 @@ def render_position(
         return
 
     terminal_width, terminal_height = _live_terminal_size(console)
-    # Rich's Console captures dimensions when it is created. Recreate the
-    # renderer for each board refresh so Windows Terminal resizes are honored.
-    console = Console(
-        file=console.file,
-        width=terminal_width,
-        height=terminal_height,
-        force_terminal=console.is_terminal,
-        color_system=console.color_system,
-    )
+    # Update Rich's cached dimensions on every refresh. Keeping the same
+    # Console preserves recording, output streams, and terminal capabilities.
+    console._width = terminal_width
+    console._height = terminal_height
     console.clear()
     side_name = color_name(human_color)
     turn_name = f"{color_name(board.turn)} to move"

@@ -16,11 +16,12 @@ from rich.text import Text
 from terchess.clock import ChessClock, color_name, format_clock
 from terchess.config import load_config
 
-LIGHT_SQUARE = "#A18262"
-DARK_SQUARE = "#806A54"
-LAST_MOVE_SQUARE = "#8A7845"
+# Classic warm wood-and-ivory board palette. Piece ink stays fixed by side.
+LIGHT_SQUARE = "#A68562"
+DARK_SQUARE = "#795A40"
+LAST_MOVE_SQUARE = "#8D784C"
 WHITE_PIECE = "#FFF4DD"
-BLACK_PIECE = "#171717"
+BLACK_PIECE = "#080808"
 
 
 def is_termux() -> bool:
@@ -124,175 +125,14 @@ def _live_terminal_size(console: Console) -> tuple[int, int]:
         return max(1, size.columns), max(1, size.lines)
 
 
-# 16x16 silhouettes are rendered with Unicode quadrant blocks.
-# Each terminal character represents a 2x2 pixel region. Unlike Braille dots,
-# these are contiguous filled shapes that remain legible as the board grows.
-_PIECE_MASKS: dict[int, tuple[str, ...]] = {
-    chess.PAWN: (
-        ".......##.......",
-        "......####......",
-        ".....######.....",
-        ".....######.....",
-        "......####......",
-        "......#####.....",
-        ".....#######....",
-        ".....#######....",
-        "....#########...",
-        "....#########...",
-        ".....#######....",
-        ".....#######....",
-        ".....#######....",
-        "...###########..",
-        "..############..",
-        "..#############.",
-    ),
-    chess.ROOK: (
-        ".####.####.####.",
-        ".####.####.####.",
-        ".####.####.####.",
-        ".##############.",
-        "...##########...",
-        "...##########...",
-        "...##########...",
-        "...##########...",
-        "...##########...",
-        "...##########...",
-        "...##########...",
-        "..############..",
-        ".##############.",
-        ".##############.",
-        "################",
-        "################",
-    ),
-    chess.KNIGHT: (
-        "........#.......",
-        ".......##...#...",
-        ".......#######..",
-        "......#####.###.",
-        "......#########.",
-        ".....#########..",
-        ".....#########..",
-        "....########....",
-        "...########.....",
-        "...########.....",
-        "..##########....",
-        "..###########...",
-        ".#############..",
-        "##############..",
-        ".##############.",
-        ".##############.",
-    ),
-    chess.BISHOP: (
-        "........#.......",
-        ".......###......",
-        "......#####.....",
-        ".....#######....",
-        ".....##...##....",
-        "....###...###...",
-        "....##....###...",
-        ".....##.####....",
-        ".....#######....",
-        "......#####.....",
-        ".....#######....",
-        ".....#######....",
-        "....#########...",
-        "...###########..",
-        "..#############.",
-        "..############..",
-    ),
-    chess.QUEEN: (
-        "...##..##..##...",
-        "..############..",
-        "..############..",
-        "...##..##..###..",
-        "...##..###..##..",
-        "...###########..",
-        "...###########..",
-        "....#########...",
-        "....#########...",
-        "....#########...",
-        "...##########...",
-        "...##########...",
-        "..#############.",
-        "..#############.",
-        ".###############",
-        ".###############",
-    ),
-    chess.KING: (
-        ".......##.......",
-        ".......##.......",
-        ".....######.....",
-        ".....######.....",
-        ".......##.......",
-        ".....######.....",
-        ".....#######....",
-        "....########....",
-        "....#########...",
-        "....#########...",
-        ".....#######....",
-        ".....#######....",
-        ".....#######....",
-        "....#########...",
-        "..#############.",
-        "..############..",
-    ),
-}
-
-# The four entries describe the upper-left, upper-right, lower-left, and
-# lower-right pixels of a terminal character.
-_BLOCK_GLYPHS: dict[tuple[int, int, int, int], str] = {
-    (0, 0, 0, 0): " ",
-    (1, 0, 0, 0): "▘",
-    (0, 1, 0, 0): "▝",
-    (1, 1, 0, 0): "▀",
-    (0, 0, 1, 0): "▖",
-    (1, 0, 1, 0): "▌",
-    (0, 1, 1, 0): "▞",
-    (1, 1, 1, 0): "▛",
-    (0, 0, 0, 1): "▗",
-    (1, 0, 0, 1): "▚",
-    (0, 1, 0, 1): "▐",
-    (1, 1, 0, 1): "▜",
-    (0, 0, 1, 1): "▄",
-    (1, 0, 1, 1): "▙",
-    (0, 1, 1, 1): "▟",
-    (1, 1, 1, 1): "█",
-}
-
-
 def _piece_cell_lines(piece: chess.Piece, cell_width: int, cell_height: int) -> list[str]:
-    """Render solid, scalable piece silhouettes in larger board squares.
+    """Center the native Unicode chess glyph in each terminal square.
 
-    Each Unicode quadrant-block character represents a 2x2 pixel region.
-    Tiny one-character cells retain the platform's native Unicode chess glyph.
+    Terminal fonts render text glyphs at the configured font size. A single
+    glyph cannot be enlarged independently while preserving the terminal grid.
     """
     cell_width = max(1, int(cell_width))
     cell_height = max(1, int(cell_height))
-    if cell_width >= 4 and cell_height >= 2:
-        mask = _PIECE_MASKS[piece.piece_type]
-        pixel_width, pixel_height = cell_width * 2, cell_height * 2
-        scaled = tuple(
-            "".join(
-                mask[min(15, y * 16 // pixel_height)][min(15, x * 16 // pixel_width)]
-                for x in range(pixel_width)
-            )
-            for y in range(pixel_height)
-        )
-        return [
-            "".join(
-                _BLOCK_GLYPHS[
-                    (
-                        int(scaled[cell_y * 2][cell_x * 2] == "#"),
-                        int(scaled[cell_y * 2][cell_x * 2 + 1] == "#"),
-                        int(scaled[cell_y * 2 + 1][cell_x * 2] == "#"),
-                        int(scaled[cell_y * 2 + 1][cell_x * 2 + 1] == "#"),
-                    )
-                ]
-                for cell_x in range(cell_width)
-            )
-            for cell_y in range(cell_height)
-        ]
-
     glyph = piece.unicode_symbol()
     glyph_width = cell_len(glyph)
     if glyph_width > cell_width:
@@ -306,11 +146,9 @@ def _piece_cell_lines(piece: chess.Piece, cell_width: int, cell_height: int) -> 
 
 
 def _piece_colors(piece: chess.Piece, square_background: str) -> tuple[str, str]:
-    """Use one stable foreground color per side on every board square."""
+    """Use one fixed, high-contrast foreground color for each side."""
     foreground = WHITE_PIECE if piece.color == chess.WHITE else BLACK_PIECE
     return foreground, square_background
-
-
 def _clear_rendered_screen(console: Console) -> None:
     """Clear the visible terminal viewport even if Rich's TTY detection is wrong."""
     output = console.file

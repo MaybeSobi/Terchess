@@ -140,5 +140,3 @@ def test_each_position_render_starts_with_a_fresh_terminal_viewport() -> None:
         )
 
     assert output.getvalue().count("\x1b[2J\x1b[H") == 2
-
-\n

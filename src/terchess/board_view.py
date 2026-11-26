@@ -16,9 +16,11 @@ from rich.text import Text
 from terchess.clock import ChessClock, color_name, format_clock
 from terchess.config import load_config
 
-LIGHT_SQUARE = "#F0D9B5"
-DARK_SQUARE = "#B58863"
-LAST_MOVE_SQUARE = "#E6E36A"
+LIGHT_SQUARE = "#A18262"
+DARK_SQUARE = "#806A54"
+LAST_MOVE_SQUARE = "#8A7845"
+WHITE_PIECE = "#FFF4DD"
+BLACK_PIECE = "#171717"
 
 
 def is_termux() -> bool:
@@ -122,110 +124,170 @@ def _live_terminal_size(console: Console) -> tuple[int, int]:
         return max(1, size.columns), max(1, size.lines)
 
 
-# 8x8 silhouettes are rasterized to Braille cells at the selected board size.
-# Each Braille character carries a 2x4 pixel block, so the piece artwork grows
-# with the square while remaining plain terminal text (including in Windows Terminal).
+# 16x16 silhouettes are rendered with Unicode quadrant blocks.
+# Each terminal character represents a 2x2 pixel region. Unlike Braille dots,
+# these are contiguous filled shapes that remain legible as the board grows.
 _PIECE_MASKS: dict[int, tuple[str, ...]] = {
     chess.PAWN: (
-        "...##...",
-        "...##...",
-        "..####..",
-        "..####..",
-        "...##...",
-        "..####..",
-        ".######.",
-        ".######.",
+        ".......##.......",
+        "......####......",
+        ".....######.....",
+        ".....######.....",
+        "......####......",
+        "......#####.....",
+        ".....#######....",
+        ".....#######....",
+        "....#########...",
+        "....#########...",
+        ".....#######....",
+        ".....#######....",
+        ".....#######....",
+        "...###########..",
+        "..############..",
+        "..#############.",
     ),
     chess.ROOK: (
-        ".##..##.",
-        ".##..##.",
-        "########",
-        ".######.",
-        "..####..",
-        "..####..",
-        "########",
-        "########",
+        ".####.####.####.",
+        ".####.####.####.",
+        ".####.####.####.",
+        ".##############.",
+        "...##########...",
+        "...##########...",
+        "...##########...",
+        "...##########...",
+        "...##########...",
+        "...##########...",
+        "...##########...",
+        "..############..",
+        ".##############.",
+        ".##############.",
+        "################",
+        "################",
     ),
     chess.KNIGHT: (
-        ".....##.",
-        "....###.",
-        "...####.",
-        "..#####.",
-        ".######.",
-        "##.####.",
-        "########",
-        "########",
+        "........#.......",
+        ".......##...#...",
+        ".......#######..",
+        "......#####.###.",
+        "......#########.",
+        ".....#########..",
+        ".....#########..",
+        "....########....",
+        "...########.....",
+        "...########.....",
+        "..##########....",
+        "..###########...",
+        ".#############..",
+        "##############..",
+        ".##############.",
+        ".##############.",
     ),
     chess.BISHOP: (
-        "....##..",
-        "...####.",
-        "....##..",
-        "...####.",
-        "..####..",
-        ".######.",
-        ".######.",
-        "########",
+        "........#.......",
+        ".......###......",
+        "......#####.....",
+        ".....#######....",
+        ".....##...##....",
+        "....###...###...",
+        "....##....###...",
+        ".....##.####....",
+        ".....#######....",
+        "......#####.....",
+        ".....#######....",
+        ".....#######....",
+        "....#########...",
+        "...###########..",
+        "..#############.",
+        "..############..",
     ),
     chess.QUEEN: (
-        "#.##.##.",
-        "########",
-        ".######.",
-        "..####..",
-        ".######.",
-        "##.##.##",
-        "########",
-        "########",
+        "...##..##..##...",
+        "..############..",
+        "..############..",
+        "...##..##..###..",
+        "...##..###..##..",
+        "...###########..",
+        "...###########..",
+        "....#########...",
+        "....#########...",
+        "....#########...",
+        "...##########...",
+        "...##########...",
+        "..#############.",
+        "..#############.",
+        ".###############",
+        ".###############",
     ),
     chess.KING: (
-        "...##...",
-        "...##...",
-        ".######.",
-        "...##...",
-        "..####..",
-        ".######.",
-        "########",
-        "########",
+        ".......##.......",
+        ".......##.......",
+        ".....######.....",
+        ".....######.....",
+        ".......##.......",
+        ".....######.....",
+        ".....#######....",
+        "....########....",
+        "....#########...",
+        "....#########...",
+        ".....#######....",
+        ".....#######....",
+        ".....#######....",
+        "....#########...",
+        "..#############.",
+        "..############..",
     ),
 }
 
-
-def _braille_cell(mask: tuple[str, ...], left: int, top: int) -> str:
-    """Encode a 2x4 pixel region as one Unicode Braille character."""
-    dots = (
-        (0, 0, 0), (0, 1, 1), (0, 2, 2), (1, 0, 3),
-        (1, 1, 4), (1, 2, 5), (0, 3, 6), (1, 3, 7),
-    )
-    value = 0
-    for dx, dy, bit in dots:
-        x, y = left + dx, top + dy
-        if y < len(mask) and x < len(mask[y]) and mask[y][x] == "#":
-            value |= 1 << bit
-    return chr(0x2800 + value)
+# The four entries describe the upper-left, upper-right, lower-left, and
+# lower-right pixels of a terminal character.
+_BLOCK_GLYPHS: dict[tuple[int, int, int, int], str] = {
+    (0, 0, 0, 0): " ",
+    (1, 0, 0, 0): "▘",
+    (0, 1, 0, 0): "▝",
+    (1, 1, 0, 0): "▀",
+    (0, 0, 1, 0): "▖",
+    (1, 0, 1, 0): "▌",
+    (0, 1, 1, 0): "▞",
+    (1, 1, 1, 0): "▛",
+    (0, 0, 0, 1): "▗",
+    (1, 0, 0, 1): "▚",
+    (0, 1, 0, 1): "▐",
+    (1, 1, 0, 1): "▜",
+    (0, 0, 1, 1): "▄",
+    (1, 0, 1, 1): "▙",
+    (0, 1, 1, 1): "▟",
+    (1, 1, 1, 1): "█",
+}
 
 
 def _piece_cell_lines(piece: chess.Piece, cell_width: int, cell_height: int) -> list[str]:
-    """Render a scalable Braille silhouette, retaining Unicode chess glyphs when tiny.
+    """Render solid, scalable piece silhouettes in larger board squares.
 
-    Standard terminal text cannot enlarge a font glyph independently. For cells
-    at least 4x2, draw a recognizable piece silhouette with Braille pixels;
-    larger presets therefore increase the actual visible piece artwork. The
-    2x1 compact/Termux layout keeps the standard Unicode chess symbol.
+    Each Unicode quadrant-block character represents a 2x2 pixel region.
+    Tiny one-character cells retain the platform's native Unicode chess glyph.
     """
     cell_width = max(1, int(cell_width))
     cell_height = max(1, int(cell_height))
     if cell_width >= 4 and cell_height >= 2:
         mask = _PIECE_MASKS[piece.piece_type]
-        pixel_width, pixel_height = cell_width * 2, cell_height * 4
+        pixel_width, pixel_height = cell_width * 2, cell_height * 2
         scaled = tuple(
             "".join(
-                mask[min(7, y * 8 // pixel_height)][min(7, x * 8 // pixel_width)]
+                mask[min(15, y * 16 // pixel_height)][min(15, x * 16 // pixel_width)]
                 for x in range(pixel_width)
             )
             for y in range(pixel_height)
         )
         return [
             "".join(
-                _braille_cell(scaled, cell_x * 2, cell_y * 4)
+                _BLOCK_GLYPHS[
+                    (
+                        int(scaled[cell_y * 2][cell_x * 2] == "#"),
+                        int(scaled[cell_y * 2][cell_x * 2 + 1] == "#"),
+                        int(scaled[cell_y * 2 + 1][cell_x * 2] == "#"),
+                        int(scaled[cell_y * 2 + 1][cell_x * 2 + 1] == "#"),
+                    )
+                ]
                 for cell_x in range(cell_width)
             )
             for cell_y in range(cell_height)
@@ -244,13 +306,8 @@ def _piece_cell_lines(piece: chess.Piece, cell_width: int, cell_height: int) -> 
 
 
 def _piece_colors(piece: chess.Piece, square_background: str) -> tuple[str, str]:
-    """Keep black pieces consistently dark; adapt white pieces for square contrast."""
-    if piece.color == chess.WHITE:
-        foreground = "#5A351D" if square_background in {LIGHT_SQUARE, LAST_MOVE_SQUARE} else "#FFFFFF"
-    else:
-        # Black pieces must not flip to a pale foreground on every dark square.
-        # The dark ink remains readable on both the warm light and dark squares.
-        foreground = "#171717"
+    """Use one stable foreground color per side on every board square."""
+    foreground = WHITE_PIECE if piece.color == chess.WHITE else BLACK_PIECE
     return foreground, square_background
 
 

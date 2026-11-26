@@ -155,7 +155,7 @@ def _clear_rendered_screen(console: Console) -> None:
     """Clear the visible terminal viewport even if Rich's TTY detection is wrong."""
     output = console.file
     try:
-        output.write("\\x1b[2J\\x1b[H")
+        output.write("\x1b[2J\x1b[H")
         output.flush()
     except (AttributeError, OSError, ValueError):
         console.clear(home=True)

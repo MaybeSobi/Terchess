@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import shutil
 import sqlite3
+from collections.abc import Callable
 
 import chess
 import chess.engine
@@ -76,37 +78,69 @@ async def _clocked_prompt(
     clock: ChessClock,
     color: chess.Color,
     prompt_label: str = "Your move > ",
+    on_resize: Callable[[], None] | None = None,
 ) -> str:
-    """Read a move while repainting the clock and abort when the flag falls."""
+    """Read a move, refresh the full screen after resize, and watch the clock."""
     prompt_options = {}
     if not is_termux():
         prompt_options = {
             "bottom_toolbar": lambda: _clock_toolbar(clock),
             "refresh_interval": 0.25,
         }
-    prompt_task = asyncio.create_task(session.prompt_async(
-        [("class:prompt", prompt_label)],
-        **prompt_options,
-    ))
-    try:
-        while not prompt_task.done():
-            if clock.is_flagged(color):
+
+    previous_size = shutil.get_terminal_size(fallback=(80, 24))
+    default_text = ""
+    while True:
+        prompt_task = asyncio.create_task(session.prompt_async(
+            [("class:prompt", prompt_label)],
+            default=default_text,
+            **prompt_options,
+        ))
+        resized = False
+        try:
+            while not prompt_task.done():
+                if clock.is_flagged(color):
+                    prompt_task.cancel()
+                    try:
+                        await prompt_task
+                    except (asyncio.CancelledError, EOFError, KeyboardInterrupt):
+                        pass
+                    raise ClockExpired(color)
+
+                if on_resize is not None and not is_termux():
+                    current_size = shutil.get_terminal_size(
+                        fallback=(previous_size.columns, previous_size.lines)
+                    )
+                    if current_size != previous_size:
+                        # Keep any move text already typed while rebuilding the
+                        # board, then reopen the prompt in the resized window.
+                        try:
+                            default_text = session.default_buffer.text
+                        except (AttributeError, RuntimeError):
+                            default_text = ""
+                        prompt_task.cancel()
+                        try:
+                            await prompt_task
+                        except (asyncio.CancelledError, EOFError, KeyboardInterrupt):
+                            pass
+                        on_resize()
+                        previous_size = current_size
+                        resized = True
+                        break
+
+                await asyncio.sleep(0.05)
+
+            if resized:
+                continue
+            return await prompt_task
+        except BaseException:
+            if not prompt_task.done():
                 prompt_task.cancel()
                 try:
                     await prompt_task
-                except (asyncio.CancelledError, EOFError, KeyboardInterrupt):
+                except BaseException:
                     pass
-                raise ClockExpired(color)
-            await asyncio.sleep(0.05)
-        return await prompt_task
-    except BaseException:
-        if not prompt_task.done():
-            prompt_task.cancel()
-            try:
-                await prompt_task
-            except BaseException:
-                pass
-        raise
+            raise
 
 
 def _format_clock_label(base_seconds: int, increment_seconds: int) -> str:
@@ -151,7 +185,22 @@ async def play_game(
             render_text_position(console, board, human_color, skill_level, clock, time_control_name, notice, opening_name=opening_name)
         if side == human_color:
             try:
-                raw = await _clocked_prompt(session, clock, side)
+                raw = await _clocked_prompt(
+                    session,
+                    clock,
+                    side,
+                    on_resize=(
+                        lambda: render_position(
+                            console, board, human_color, skill_level, clock,
+                            time_control_name, notice, opening_name=opening_name,
+                        )
+                    ) if show_board else (
+                        lambda: render_text_position(
+                            console, board, human_color, skill_level, clock,
+                            time_control_name, notice, opening_name=opening_name,
+                        )
+                    ),
+                )
             except ClockExpired:
                 timed_out = side
                 break
@@ -298,7 +347,21 @@ async def play_hotseat_game(
 
         try:
             raw = await _clocked_prompt(
-                session, clock, side, prompt_label=f"{player_name} ({color_name(side)}) > "
+                session,
+                clock,
+                side,
+                prompt_label=f"{player_name} ({color_name(side)}) > ",
+                on_resize=(
+                    lambda: render_position(
+                        console, board, chess.WHITE, None, clock, time_control_name,
+                        notice, opening_name=opening_name, game_label=game_label,
+                    )
+                ) if show_board else (
+                    lambda: render_text_position(
+                        console, board, chess.WHITE, None, clock, time_control_name,
+                        notice, opening_name=opening_name, game_label=game_label,
+                    )
+                ),
             )
         except ClockExpired:
             timed_out = side

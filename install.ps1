@@ -161,6 +161,16 @@ function Find-StockfishExecutable {
         }
     }
 
+    # Discover versioned Stockfish builds installed by Terchess.
+    $managedRoot = Join-Path $env:LOCALAPPDATA "Terchess\Engines"
+    if (Test-Path -LiteralPath $managedRoot -PathType Container) {
+        $managedFiles = Get-ChildItem -LiteralPath $managedRoot -Filter "stockfish*" -File -Recurse -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -match '^stockfish(?:[-_].*)?(?:\.exe)?$' }
+        foreach ($managedFile in $managedFiles) {
+            $candidates.Add($managedFile.FullName)
+        }
+    }
+
     foreach ($candidate in ($candidates | Select-Object -Unique)) {
         if (Test-StockfishExecutable -Path $candidate) {
             return (Resolve-Path -LiteralPath $candidate).Path
@@ -239,37 +249,74 @@ if (-not $Python) {
     }
 }
 
-Write-Info "Checking Stockfish..."
-$StockfishPath = Find-StockfishExecutable
-if ($StockfishPath) {
-    Write-Info "Found an existing Stockfish engine: $StockfishPath"
-    Write-Info "Skipping Stockfish installation."
-    Save-DetectedStockfishPath -EnginePath $StockfishPath
-} else {
-    Write-Warn "No working Stockfish executable was found on PATH or under C:\Engines."
+$StockfishRoot = Join-Path $env:LOCALAPPDATA "Terchess\Engines"
+$StockfishConfig = Join-Path $env:APPDATA "Terchess\config.json"
+$StockfishHelper = Join-Path $env:TEMP ("terchess-stockfish-" + [guid]::NewGuid().ToString("N") + ".py")
+$StockfishHelperReady = $false
+$StockfishReady = $false
 
-    if (Get-Command winget -ErrorAction SilentlyContinue) {
-        Write-Info "Trying to install Stockfish with winget..."
-        winget install --id Stockfish.Stockfish --exact --accept-package-agreements --accept-source-agreements
+try {
+    Write-Info "Downloading the Terchess Stockfish installer helper..."
+    try {
+        Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/$Repo/main/install_stockfish.py" -OutFile $StockfishHelper
+        $StockfishHelperReady = Test-Path -LiteralPath $StockfishHelper -PathType Leaf
+    } catch {
+        Write-Warn "Could not download the Stockfish installer helper: $($_.Exception.Message)"
+    }
 
-        if ($LASTEXITCODE -ne 0) {
-            Write-Warn "Automatic Stockfish installation was not available. Install it from https://stockfishchess.org/download/."
+    if ($StockfishHelperReady) {
+        Write-Info "Installing the latest official stable Stockfish release..."
+        if ($Python -eq "py") {
+            & py -3 $StockfishHelper --platform windows --install-dir $StockfishRoot --config-path $StockfishConfig
         } else {
-            $machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
-            $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-            $env:Path = "$machinePath;$userPath"
-            $StockfishPath = Find-StockfishExecutable
+            & python $StockfishHelper --platform windows --install-dir $StockfishRoot --config-path $StockfishConfig
+        }
+        $StockfishReady = ($LASTEXITCODE -eq 0)
+        if (-not $StockfishReady) {
+            Write-Warn "The official Stockfish download or validation failed."
+        }
+    }
 
-            if ($StockfishPath) {
-                Write-Info "Found the newly installed Stockfish engine: $StockfishPath"
-                Save-DetectedStockfishPath -EnginePath $StockfishPath
+    if (-not $StockfishReady) {
+        Write-Warn "Trying an existing/system Stockfish executable as a fallback; it may be older than the latest official release."
+        $StockfishPath = Find-StockfishExecutable
+
+        if (-not $StockfishPath -and (Get-Command winget -ErrorAction SilentlyContinue)) {
+            Write-Info "Trying WinGet as a fallback source..."
+            winget install --id Stockfish.Stockfish --exact --accept-package-agreements --accept-source-agreements
+            if ($LASTEXITCODE -eq 0) {
+                $machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
+                $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+                $env:Path = "$machinePath;$userPath"
+                $StockfishPath = Find-StockfishExecutable
             } else {
-                Write-Warn "Stockfish was installed, but this session could not locate its executable. Terchess will ask for its path when you choose Play vs Stockfish."
+                Write-Warn "WinGet could not install the fallback Stockfish package."
             }
         }
-    } else {
-        Write-Warn "Install Stockfish separately from https://stockfishchess.org/download/."
+
+        if ($StockfishPath) {
+            if ($StockfishHelperReady) {
+                if ($Python -eq "py") {
+                    & py -3 $StockfishHelper --validate-existing $StockfishPath --config-path $StockfishConfig
+                } else {
+                    & python $StockfishHelper --validate-existing $StockfishPath --config-path $StockfishConfig
+                }
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Warn "Using the system fallback. Its version may be older than the latest official Stockfish release."
+                } else {
+                    Write-Warn "The fallback Stockfish executable failed validation. Select a compatible engine in Terchess Settings."
+                }
+            } else {
+                Write-Info "Found an existing Stockfish executable: $StockfishPath"
+                Save-DetectedStockfishPath -EnginePath $StockfishPath
+                Write-Warn "The existing engine was saved as a fallback; its version could not be checked against the latest official release."
+            }
+        } else {
+            Write-Warn "No compatible Stockfish engine is available. Install it manually from https://stockfishchess.org/download/ and select it in Terchess Settings."
+        }
     }
+} finally {
+    Remove-Item -LiteralPath $StockfishHelper -Force -ErrorAction SilentlyContinue
 }
 
 Write-Info "Finding the latest stable release..."

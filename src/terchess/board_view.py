@@ -122,14 +122,115 @@ def _live_terminal_size(console: Console) -> tuple[int, int]:
         return max(1, size.columns), max(1, size.lines)
 
 
-def _piece_cell_lines(piece: chess.Piece, cell_width: int, cell_height: int) -> list[str]:
-    """Center the actual Unicode chess symbol in a terminal square.
+# 8x8 silhouettes are rasterized to Braille cells at the selected board size.
+# Each Braille character carries a 2x4 pixel block, so the piece artwork grows
+# with the square while remaining plain terminal text (including in Windows Terminal).
+_PIECE_MASKS: dict[int, tuple[str, ...]] = {
+    chess.PAWN: (
+        "...##...",
+        "...##...",
+        "..####..",
+        "..####..",
+        "...##...",
+        "..####..",
+        ".######.",
+        ".######.",
+    ),
+    chess.ROOK: (
+        ".##..##.",
+        ".##..##.",
+        "########",
+        ".######.",
+        "..####..",
+        "..####..",
+        "########",
+        "########",
+    ),
+    chess.KNIGHT: (
+        ".....##.",
+        "....###.",
+        "...####.",
+        "..#####.",
+        ".######.",
+        "##.####.",
+        "########",
+        "########",
+    ),
+    chess.BISHOP: (
+        "....##..",
+        "...####.",
+        "....##..",
+        "...####.",
+        "..####..",
+        ".######.",
+        ".######.",
+        "########",
+    ),
+    chess.QUEEN: (
+        "#.##.##.",
+        "########",
+        ".######.",
+        "..####..",
+        ".######.",
+        "##.##.##",
+        "########",
+        "########",
+    ),
+    chess.KING: (
+        "...##...",
+        "...##...",
+        ".######.",
+        "...##...",
+        "..####..",
+        ".######.",
+        "########",
+        "########",
+    ),
+}
 
-    Terminal fonts cannot scale a text glyph like an image. Keep the proper
-    chess symbols at every board size rather than drawing unreliable ASCII art.
+
+def _braille_cell(mask: tuple[str, ...], left: int, top: int) -> str:
+    """Encode a 2x4 pixel region as one Unicode Braille character."""
+    dots = (
+        (0, 0, 0), (0, 1, 1), (0, 2, 2), (1, 0, 3),
+        (1, 1, 4), (1, 2, 5), (0, 3, 6), (1, 3, 7),
+    )
+    value = 0
+    for dx, dy, bit in dots:
+        x, y = left + dx, top + dy
+        if y < len(mask) and x < len(mask[y]) and mask[y][x] == "#":
+            value |= 1 << bit
+    return chr(0x2800 + value)
+
+
+def _piece_cell_lines(piece: chess.Piece, cell_width: int, cell_height: int) -> list[str]:
+    """Render a scalable Braille silhouette, retaining Unicode chess glyphs when tiny.
+
+    Standard terminal text cannot enlarge a font glyph independently. For cells
+    at least 4x2, draw a recognizable piece silhouette with Braille pixels;
+    larger presets therefore increase the actual visible piece artwork. The
+    2x1 compact/Termux layout keeps the standard Unicode chess symbol.
     """
     cell_width = max(1, int(cell_width))
     cell_height = max(1, int(cell_height))
+    if cell_width >= 4 and cell_height >= 2:
+        mask = _PIECE_MASKS[piece.piece_type]
+        pixel_width, pixel_height = cell_width * 2, cell_height * 4
+        scaled = tuple(
+            "".join(
+                mask[min(7, y * 8 // pixel_height)][min(7, x * 8 // pixel_width)]
+                for x in range(pixel_width)
+            )
+            for y in range(pixel_height)
+        )
+        return [
+            "".join(
+                _braille_cell(scaled, cell_x * 2, cell_y * 4)
+                for cell_x in range(cell_width)
+            )
+            for cell_y in range(cell_height)
+        ]
+
     glyph = piece.unicode_symbol()
     glyph_width = cell_len(glyph)
     if glyph_width > cell_width:

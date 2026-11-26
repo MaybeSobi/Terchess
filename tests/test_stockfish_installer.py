@@ -62,7 +62,7 @@ uciok
         with self.assertRaises(InstallerError):
             parse_uci_output(uci, 18)
         with self.assertRaises(InstallerError):
-            parse_uci_output("id name Stockfish 19\\nuciok\\n", 19)
+            parse_uci_output("id name Stockfish 19" + chr(10) + "uciok" + chr(10), 19)
 
     def test_archive_paths_cannot_escape_extraction_directory(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -71,7 +71,7 @@ uciok
                 safe_destination(root, "stockfish/engine"),
                 (root / "stockfish" / "engine").resolve(),
             )
-            for name in ("../outside", "/etc/passwd", "stockfish/../../outside", "..\\\\outside", "C:/outside"):
+            for name in ("../outside", "/etc/passwd", "stockfish/../../outside", ".." + chr(92) + "outside", "C:/outside"):
                 with self.subTest(name=name), self.assertRaises(InstallerError):
                     safe_destination(root, name)
 

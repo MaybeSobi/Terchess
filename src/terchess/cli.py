@@ -48,6 +48,7 @@ class GameSettings:
     human_color: chess.Color = chess.WHITE
     time_control_key: str = "3"
     show_board: bool = True
+    board_scale: str = "compact"
 
     @property
     def base_seconds(self) -> int:
@@ -115,7 +116,8 @@ def show_settings(settings: GameSettings) -> None:
         f"[bold]Skill Level:[/bold] {settings.skill_level}/20\n"
         f"[bold]Your side:[/bold] {color_name(settings.human_color)}\n"
         f"[bold]Time control:[/bold] {settings.time_control_label}\n"
-        f"[bold]Display mode:[/bold] {'Board view' if settings.show_board else 'Blindfold (text-only)'}",
+        f"[bold]Display mode:[/bold] {'Board view' if settings.show_board else 'Blindfold (text-only)'}\n"
+        f"[bold]Board size:[/bold] {settings.board_scale.title()}",
         title="Current settings", border_style="cyan",
     ))
 
@@ -136,6 +138,7 @@ def _settings_config(
         "human_color": "white" if settings.human_color == chess.WHITE else "black",
         "time_control_key": settings.time_control_key,
         "show_board": settings.show_board,
+        "board_scale": settings.board_scale,
     }
 
 
@@ -222,6 +225,7 @@ def _settings_from_config(config: dict[str, object]) -> GameSettings:
         human_color=chess.WHITE if config["human_color"] == "white" else chess.BLACK,
         time_control_key=str(config["time_control_key"]),
         show_board=bool(config["show_board"]),
+        board_scale=str(config.get("board_scale", "compact")),
     )
 
 
@@ -240,15 +244,25 @@ def settings_menu(
             "  1 · Stockfish difficulty\n"
             "  2 · Play as White or Black\n"
             "  3 · Time control\n"
-            "  4 · Back to main menu"
+            "  4 · Board size (compact / normal / large)\n"
+            "  5 · Back to main menu"
         )
-        choice = Prompt.ask("Select setting", choices=["1", "2", "3", "4"], default="4")
+        choice = Prompt.ask("Select setting", choices=["1", "2", "3", "4", "5"], default="5")
         if choice == "1":
             settings.skill_level = _ask_skill_level(settings.skill_level)
         elif choice == "2":
             settings.human_color = _ask_color(settings.human_color)
         elif choice == "3":
             settings.time_control_key = _ask_time_control(settings.time_control_key)
+        elif choice == "4":
+            labels = {"1": "compact", "2": "normal", "3": "large"}
+            console.print("  1 · Compact — pieces fill more of each square\n  2 · Normal — balanced board size\n  3 · Large — larger squares")
+            selected = Prompt.ask(
+                "Board size",
+                choices=list(labels),
+                default={"compact": "1", "normal": "2", "large": "3"}.get(settings.board_scale, "1"),
+            )
+            settings.board_scale = labels[selected]
         else:
             return
         _save_preferences(

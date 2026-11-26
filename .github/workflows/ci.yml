@@ -41,7 +41,7 @@ jobs:
         run: python -m terchess --version
       - name: Validate Unix installers and launchers
         if: runner.os != 'Windows'
-        run: bash -n install-linux.sh install-macos.sh install-termux.sh run_terchess.sh run_terchess.command
+        run: bash -n installers/install-linux.sh installers/install-macos.sh installers/install-termux.sh run_terchess.sh run_terchess.command
       - name: Validate PowerShell installer
         if: runner.os == 'Windows'
         shell: pwsh
@@ -49,13 +49,13 @@ jobs:
           $tokens = $null
           $errors = $null
           [System.Management.Automation.Language.Parser]::ParseFile(
-            "install.ps1",
+            "installers/install.ps1",
             [ref]$tokens,
             [ref]$errors
           ) | Out-Null
           if ($errors.Count -gt 0) {
             $errors | Format-List *
-            throw "install.ps1 contains PowerShell syntax errors."
+            throw "installers/install.ps1 contains PowerShell syntax errors."
           }
       - name: Run tests
         run: python -m pytest -q

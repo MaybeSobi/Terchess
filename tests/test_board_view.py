@@ -124,6 +124,21 @@ def test_white_and_black_pawns_use_different_silhouette_styles() -> None:
     assert white_pawn != black_pawn
 
 
+
+
+def test_piece_art_itself_scales_with_compact_normal_and_large_modes() -> None:
+    from terchess.board_view import _piece_cell_lines
+
+    piece = chess.Piece(chess.QUEEN, chess.WHITE)
+    compact = _piece_cell_lines(piece, 4, 2)
+    normal = _piece_cell_lines(piece, 6, 3)
+    large = _piece_cell_lines(piece, 8, 4)
+
+    assert (len(compact), len(compact[0].strip())) == (2, 3)
+    assert (len(normal), len(normal[0].strip())) == (3, 5)
+    assert (len(large), len(large[0].strip())) == (4, 7)
+
+
 def test_terminal_redraw_explicitly_clears_and_homes_the_viewport() -> None:
     from io import StringIO
     from terchess.board_view import _clear_rendered_screen

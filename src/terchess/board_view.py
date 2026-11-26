@@ -17,7 +17,7 @@ from terchess.clock import ChessClock, color_name, format_clock
 from terchess.config import load_config
 
 # Classic warm wood-and-ivory board palette. Piece ink stays fixed by side.
-LIGHT_SQUARE = "#A98A68"
+LIGHT_SQUARE = "#A68562"
 DARK_SQUARE = "#795A40"
 LAST_MOVE_SQUARE = "#8D784C"
 WHITE_PIECE = "#FFF4DD"

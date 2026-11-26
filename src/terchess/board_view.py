@@ -109,8 +109,8 @@ def _board_cell_dimensions(
     if wide_layout is None:
         wide_layout = terminal_width >= 110 and terminal_height >= 32
 
-    board_width = max(32, terminal_width - (50 if wide_layout else 6))
-    max_cell_width = max(4, board_width // 8)
+    board_width = max(8, terminal_width - (50 if wide_layout else 6))
+    max_cell_width = max(1, board_width // 8)
     max_cell_height = min(4, max(1, (terminal_height - 8) // 8))
 
     presets = {
@@ -190,7 +190,7 @@ def board_table(
     cell_height: int = 1,
 ) -> Table:
     """Build a responsive colored board oriented from the human player's side."""
-    cell_width = max(2, int(cell_width))
+    cell_width = max(1, int(cell_width))
     cell_height = max(1, int(cell_height))
     middle_row = cell_height // 2
     table = Table.grid(padding=(0, 0), collapse_padding=True)

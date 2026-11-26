@@ -44,7 +44,7 @@ Please run the tests before submitting. If a change affects the interactive term
 
 ## Project direction
 
-The near-term roadmap prioritizes saved-game history and PGN support, hotseat play in one terminal, LAN multiplayer, and then Stockfish game analysis. Feature proposals should describe the user problem, a minimal design, and how the behavior can be tested.
+The current roadmap prioritizes LAN multiplayer, followed by Stockfish game analysis. See [ROADMAP.md](docs/ROADMAP.md) for the planned milestones. Feature proposals should describe the user problem, a minimal design, and how the behavior can be tested.
 
 ## License
 

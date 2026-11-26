@@ -437,14 +437,18 @@ def main() -> None:
                     ))
                 except OSError as exc:
                     console.print(f"[yellow]Warning: could not save engine choice: {exc}[/yellow]")
-        elif len(engine_catalog) == 1 and (
+        elif engine_catalog and (
             not preferred_engine_path
-            or os.path.normcase(os.path.abspath(preferred_engine_path))
-            != os.path.normcase(os.path.abspath(engine_catalog[0]["path"]))
+            or not any(
+                os.path.normcase(os.path.abspath(preferred_engine_path))
+                == os.path.normcase(os.path.abspath(item["path"]))
+                for item in engine_catalog
+            )
         ):
-            preferred_engine_path = engine_catalog[0]["path"]
-            if remember_engine_choice:
-                persistent_engine_path = preferred_engine_path
+            if len(engine_catalog) == 1 or remember_engine_choice:
+                preferred_engine_path = engine_catalog[0]["path"]
+                if remember_engine_choice:
+                    persistent_engine_path = preferred_engine_path
 
         while True:
             console.print()

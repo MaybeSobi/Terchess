@@ -40,7 +40,35 @@ def test_termux_arm64_uses_android_asset():
         assert installer.asset_name() == "stockfish-android-arm64-universal.tar.gz"
 
 
-def test_stockfish_19_requires_version_and_skill_range():
+def test_release_version_is_read_from_tag():
+    assert installer.release_version({"tag_name": "sf_20.1", "name": "Stockfish 20.1"}) == "20.1"
+
+
+def test_release_version_falls_back_to_release_title():
+    assert installer.release_version({"tag_name": "v20.1", "name": "Stockfish 20.1"}) == "20.1"
+
+
+def test_unidentifiable_release_is_rejected():
+    try:
+        installer.release_version({"tag_name": "nightly", "name": "Development build"})
+    except RuntimeError as exc:
+        assert "Could not determine" in str(exc)
+    else:
+        raise AssertionError("An unidentifiable release must not be accepted.")
+
+
+def test_expected_latest_engine_and_skill_range_are_accepted():
+    output = (
+        "id name Stockfish 20.1\n"
+        "option name Skill Level type spin default 20 min 0 max 20\n"
+        "uciok\n"
+    )
+    completed = subprocess.CompletedProcess(["stockfish"], 0, stdout=output, stderr="")
+    with patch.object(installer.subprocess, "run", return_value=completed):
+        assert installer.is_expected_stockfish(Path("stockfish"), "20.1")
+
+
+def test_older_engine_is_not_accepted_for_new_release():
     output = (
         "id name Stockfish 19\n"
         "option name Skill Level type spin default 20 min 0 max 20\n"
@@ -48,15 +76,15 @@ def test_stockfish_19_requires_version_and_skill_range():
     )
     completed = subprocess.CompletedProcess(["stockfish"], 0, stdout=output, stderr="")
     with patch.object(installer.subprocess, "run", return_value=completed):
-        assert installer.is_stockfish_19(Path("stockfish"))
+        assert not installer.is_expected_stockfish(Path("stockfish"), "20")
 
 
-def test_old_engine_is_not_accepted():
+def test_engine_with_out_of_range_skill_level_is_rejected():
     output = (
-        "id name Stockfish 17.1\n"
-        "option name Skill Level type spin default 20 min 0 max 20\n"
+        "id name Stockfish 20\n"
+        "option name Skill Level type spin default 20 min 1 max 20\n"
         "uciok\n"
     )
     completed = subprocess.CompletedProcess(["stockfish"], 0, stdout=output, stderr="")
     with patch.object(installer.subprocess, "run", return_value=completed):
-        assert not installer.is_stockfish_19(Path("stockfish"))
+        assert not installer.is_expected_stockfish(Path("stockfish"), "20")

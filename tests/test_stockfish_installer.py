@@ -4,6 +4,7 @@ import importlib.util
 from pathlib import Path
 from unittest.mock import patch
 import subprocess
+from types import SimpleNamespace
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "scripts" / "install_stockfish.py"
 SPEC = importlib.util.spec_from_file_location("terchess_stockfish_installer", MODULE_PATH)
@@ -179,7 +180,7 @@ def test_save_config_preserves_other_preferences_and_engine_catalog(tmp_path, mo
 
 
 def test_prompt_update_strategy_can_keep_both_engines(monkeypatch):
-    monkeypatch.setattr(installer.sys.stdin, "isatty", lambda: True)
+    monkeypatch.setattr(installer.sys, "stdin", SimpleNamespace(isatty=lambda: True))
     monkeypatch.setattr("builtins.input", lambda _prompt: "2")
     assert installer.prompt_update_strategy(
         [{"path": "/usr/games/stockfish", "version": "17"}],

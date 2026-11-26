@@ -65,7 +65,7 @@ Terchess is a **Python terminal application**, not a standalone Windows `.exe`. 
 
 ### 1. Download and extract the ZIP
 
-Download **[Terchess-1.1.0.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.1.0/Terchess-1.1.0.zip)** from the [stable v1.1.0 release](https://github.com/MaybeSobi/Terchess/releases/tag/v1.1.0), then extract it.
+Download **[Terchess-1.1.5.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.1.5/Terchess-1.1.5.zip)** from the [stable v1.1.5 release](https://github.com/MaybeSobi/Terchess/releases/tag/v1.1.5), then extract it.
 
 - **Windows:** In File Explorer, right-click the ZIP and choose **Extract All…**.
 - **macOS:** Double-click the ZIP in Finder; macOS extracts the folder beside it.
@@ -159,7 +159,7 @@ The `[dev]` extra installs `pytest`; it is not required just to play.
 
 #### Download, extract, and enter the project directory
 
-Download [Terchess-1.1.0.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.1.0/Terchess-1.1.0.zip) from the [stable release page](https://github.com/MaybeSobi/Terchess/releases/tag/v1.1.0). In Finder, double-click the ZIP to extract it. If you saved it to Downloads, open Terminal and enter the extracted project folder:
+Download [Terchess-1.1.5.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.1.5/Terchess-1.1.5.zip) from the [stable release page](https://github.com/MaybeSobi/Terchess/releases/tag/v1.1.5). In Finder, double-click the ZIP to extract it. If you saved it to Downloads, open Terminal and enter the extracted project folder:
 
 ```bash
 cd "$HOME/Downloads/Terchess-1.1.0"
@@ -206,11 +206,11 @@ sudo apt update
 sudo apt install -y python3-full python3-venv python3-pip unzip
 ```
 
-Download `Terchess-1.1.0.zip` from the [releases page](https://github.com/MaybeSobi/Terchess/releases), then extract it. For a ZIP saved in Downloads, these commands make a Projects folder, extract the archive, and enter the project root:
+Download `Terchess-1.1.5.zip` from the [releases page](https://github.com/MaybeSobi/Terchess/releases), then extract it. For a ZIP saved in Downloads, these commands make a Projects folder, extract the archive, and enter the project root:
 
 ```bash
 mkdir -p ~/Projects
-unzip ~/Downloads/Terchess-1.1.0.zip -d ~/Projects
+unzip ~/Downloads/Terchess-1.1.5.zip -d ~/Projects
 cd ~/Projects/Terchess-1.1.0
 ls
 ```
@@ -301,7 +301,7 @@ With the virtual environment active, run:
 python -m pytest
 ```
 
-The stable `v1.1.0` release includes local SQLite game history, PGN import/export and replay, Hotseat multiplayer, offline ECO opening recognition, and lazy Stockfish startup. The one-command installers also register the `terchess` terminal command on Windows, macOS, Linux, and Android via Termux. GitHub Actions tests Python 3.10–3.13 on Windows, macOS, and Linux; the Termux installer is syntax-checked in CI, while Android runtime compatibility is validated on-device. The [release checklist](RELEASE_CHECKLIST.md) remains useful when testing future changes.
+The stable `v1.1.5` release includes adaptive chessboard sizing for regular terminal play, local SQLite game history, PGN import/export and replay, Hotseat multiplayer, offline ECO opening recognition, and lazy Stockfish startup. One-command installers register the `terchess` terminal command on Windows, macOS, Linux, and Android via Termux, and now select the latest stable official Stockfish release automatically. GitHub Actions tests Python 3.10–3.13 on Windows, macOS, and Linux; the Termux installer is syntax-checked in CI, while Android runtime compatibility is validated on-device. The [release checklist](RELEASE_CHECKLIST.md) remains useful when testing future changes.
 
 ## Roadmap
 

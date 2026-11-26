@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 
 import chess
+from rich.align import Align
 from rich.console import Console, Group
 from rich.panel import Panel
 from rich.table import Table
@@ -76,35 +77,86 @@ def _render_termux_position(
 
 
 
-def board_table(board: chess.Board, human_color: chess.Color) -> Table:
-    """Build a colored Unicode board oriented from the human player's side."""
+def _board_cell_dimensions(
+    terminal_width: int,
+    terminal_height: int,
+    wide_layout: bool | None = None,
+) -> tuple[int, int]:
+    """Choose responsive chess-square dimensions for the available terminal area.
+
+    Terminal character cells are taller than they are wide, so each square uses
+    multiple text rows as it grows. The height budget keeps the board visible
+    above the move prompt on short terminals.
+    """
+    if wide_layout is None:
+        wide_layout = terminal_width >= 100
+
+    # In the two-column layout, reserve room for the fixed-width information
+    # sidebar and the panel frame. In the stacked layout, the board gets nearly
+    # the entire terminal width.
+    available_width = terminal_width - (54 if wide_layout else 12)
+    max_cell_width = max(3, min(12, available_width // 8))
+    max_rank_height = max(1, min(4, max(0, terminal_height - 8) // 8))
+
+    cell_height = min(max_rank_height, max(1, (max_cell_width + 2) // 3))
+    cell_width = min(max_cell_width, cell_height * 3)
+    return cell_width, cell_height
+
+
+def board_table(
+    board: chess.Board,
+    human_color: chess.Color,
+    cell_width: int = 3,
+    cell_height: int = 1,
+) -> Table:
+    """Build a responsive colored board oriented from the human player's side."""
+    cell_width = max(3, int(cell_width))
+    cell_height = max(1, int(cell_height))
+    middle_row = cell_height // 2
     table = Table.grid(padding=(0, 0), collapse_padding=True)
     table.add_column(justify="right", width=2)
     for _ in range(8):
-        table.add_column(width=3, justify="center")
+        table.add_column(width=cell_width, justify="center")
+
     files = list(range(8)) if human_color == chess.WHITE else list(range(7, -1, -1))
     ranks = list(range(7, -1, -1)) if human_color == chess.WHITE else list(range(8))
     last_squares: set[chess.Square] = set()
     if board.move_stack:
         last_move = board.peek()
         last_squares = {last_move.from_square, last_move.to_square}
+
     for rank in ranks:
-        cells: list[Text] = [Text(str(rank + 1), style="bold bright_cyan")]
-        for file_index in files:
-            square = chess.square(file_index, rank)
-            piece = board.piece_at(square)
-            is_light = (file_index + rank) % 2 == 1
-            background = LAST_MOVE_SQUARE if square in last_squares else (LIGHT_SQUARE if is_light else DARK_SQUARE)
-            if piece:
-                foreground = "#FFFFFF" if piece.color == chess.WHITE else "#171717"
-                glyph = piece.unicode_symbol()
-                cell = Text(f" {glyph} ", style=f"bold {foreground} on {background}")
-            else:
-                cell = Text(" · ", style=f"on {background}")
-            cells.append(cell)
-        table.add_row(*cells)
+        for row_index in range(cell_height):
+            cells: list[Text] = [
+                Text(str(rank + 1) if row_index == middle_row else "", style="bold bright_cyan")
+            ]
+            for file_index in files:
+                square = chess.square(file_index, rank)
+                piece = board.piece_at(square)
+                is_light = (file_index + rank) % 2 == 1
+                background = LAST_MOVE_SQUARE if square in last_squares else (LIGHT_SQUARE if is_light else DARK_SQUARE)
+
+                glyph = piece.unicode_symbol() if piece else "·"
+                if row_index == middle_row:
+                    left = (cell_width - 1) // 2
+                    right = cell_width - left - 1
+                    cell_text = (" " * left) + glyph + (" " * right)
+                else:
+                    cell_text = " " * cell_width
+
+                if piece and row_index == middle_row:
+                    foreground = "#FFFFFF" if piece.color == chess.WHITE else "#171717"
+                    style = f"bold {foreground} on {background}"
+                else:
+                    style = f"on {background}"
+                cells.append(Text(cell_text, style=style))
+            table.add_row(*cells)
+
     footer = [Text("  ", style="bright_cyan")]
-    footer.extend(Text(f" {chess.FILE_NAMES[file_index]} ", style="bold bright_cyan") for file_index in files)
+    footer.extend(
+        Text(chess.FILE_NAMES[file_index].center(cell_width), style="bold bright_cyan")
+        for file_index in files
+    )
     table.add_row(*footer)
     return table
 
@@ -178,9 +230,17 @@ def render_position(
         f"TERCHESS  |  {side_name}  |  {f'Skill {skill_level}/20' if skill_level is not None else (game_label or 'Local game')}  |  {time_control_name}",
         style="bold bright_white",
     )
+    wide_layout = console.width >= 100
+    cell_width, cell_height = _board_cell_dimensions(
+        console.width, console.height, wide_layout=wide_layout,
+    )
     board_panel = Panel(
-        board_table(board, human_color), title=header, subtitle=(f"{opening_name} · Last move highlighted" if opening_name else "Last move highlighted"),
-        border_style="bright_green", padding=(1, 1), expand=False,
+        Align(board_table(board, human_color, cell_width, cell_height), align="center"),
+        title=header,
+        subtitle=(f"{opening_name} · Last move highlighted" if opening_name else "Last move highlighted"),
+        border_style="bright_green",
+        padding=(0, 1),
+        expand=True,
     )
     clocks = Table.grid(padding=(0, 1))
     clocks.add_column()
@@ -208,8 +268,8 @@ def render_position(
     if notice:
         info_text = f"[bold]Status[/bold]\n{notice}\n\n" + info_text
     info = Panel(info_text, title="Game info", border_style="magenta")
-    if console.width >= 100:
-        layout = Table.grid(padding=(1, 2))
+    if wide_layout:
+        layout = Table.grid(padding=(1, 2), expand=True)
         layout.add_column(ratio=3)
         layout.add_column(ratio=2, width=36)
         layout.add_row(board_panel, Group(clock_panel, history_panel, info))

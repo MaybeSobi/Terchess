@@ -29,7 +29,7 @@ Terchess brings the full chess experience into your terminal — including a way
 
 | Board View | Blindfold Mode |
 |:--:|:--:|
-| A compact, colored chessboard with move highlights, clocks, and move history. | A text-only game: follow algebraic moves and keep the position in your head. |
+| An adaptive-size, colored chessboard that grows to use the available terminal space, with move highlights, clocks, and move history. | A text-only game: follow algebraic moves and keep the position in your head. |
 
 Choose the way you want to think about chess. Switch display modes in the app.
 

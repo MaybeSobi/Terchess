@@ -143,11 +143,13 @@ def _piece_cell_lines(piece: chess.Piece, cell_width: int, cell_height: int) -> 
 
 
 def _piece_colors(piece: chess.Piece, square_background: str) -> tuple[str, str]:
-    """Choose a contrasting piece color while preserving the checkerboard square."""
+    """Keep black pieces consistently dark; adapt white pieces for square contrast."""
     if piece.color == chess.WHITE:
         foreground = "#5A351D" if square_background in {LIGHT_SQUARE, LAST_MOVE_SQUARE} else "#FFFFFF"
     else:
-        foreground = "#171717" if square_background in {LIGHT_SQUARE, LAST_MOVE_SQUARE} else "#F4E6D0"
+        # Black pieces must not flip to a pale foreground on every dark square.
+        # The dark ink remains readable on both the warm light and dark squares.
+        foreground = "#171717"
     return foreground, square_background
 
 

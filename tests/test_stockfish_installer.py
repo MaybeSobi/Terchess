@@ -58,37 +58,46 @@ def test_unidentifiable_release_is_rejected():
         raise AssertionError("An unidentifiable release must not be accepted.")
 
 
-def test_expected_latest_engine_and_skill_range_are_accepted():
+def test_expected_latest_engine_and_skill_range_are_accepted(tmp_path):
     output = (
         "id name Stockfish 20.1\n"
         "option name Skill Level type spin default 20 min 0 max 20\n"
         "uciok\n"
     )
-    completed = subprocess.CompletedProcess(["stockfish"], 0, stdout=output, stderr="")
+    executable = tmp_path / "stockfish"
+    executable.write_text("test executable", encoding="utf-8")
+    executable.chmod(0o755)
+    completed = subprocess.CompletedProcess([str(executable)], 0, stdout=output, stderr="")
     with patch.object(installer.subprocess, "run", return_value=completed):
-        assert installer.is_expected_stockfish(Path("stockfish"), "20.1")
+        assert installer.is_expected_stockfish(executable, "20.1")
 
 
-def test_older_engine_is_not_accepted_for_new_release():
+def test_older_engine_is_not_accepted_for_new_release(tmp_path):
     output = (
         "id name Stockfish 19\n"
         "option name Skill Level type spin default 20 min 0 max 20\n"
         "uciok\n"
     )
-    completed = subprocess.CompletedProcess(["stockfish"], 0, stdout=output, stderr="")
+    executable = tmp_path / "stockfish"
+    executable.write_text("test executable", encoding="utf-8")
+    executable.chmod(0o755)
+    completed = subprocess.CompletedProcess([str(executable)], 0, stdout=output, stderr="")
     with patch.object(installer.subprocess, "run", return_value=completed):
-        assert not installer.is_expected_stockfish(Path("stockfish"), "20")
+        assert not installer.is_expected_stockfish(executable, "20")
 
 
-def test_engine_with_out_of_range_skill_level_is_rejected():
+def test_engine_with_out_of_range_skill_level_is_rejected(tmp_path):
     output = (
         "id name Stockfish 20\n"
         "option name Skill Level type spin default 20 min 1 max 20\n"
         "uciok\n"
     )
-    completed = subprocess.CompletedProcess(["stockfish"], 0, stdout=output, stderr="")
+    executable = tmp_path / "stockfish"
+    executable.write_text("test executable", encoding="utf-8")
+    executable.chmod(0o755)
+    completed = subprocess.CompletedProcess([str(executable)], 0, stdout=output, stderr="")
     with patch.object(installer.subprocess, "run", return_value=completed):
-        assert not installer.is_expected_stockfish(Path("stockfish"), "20")
+        assert not installer.is_expected_stockfish(executable, "20")
 
 
 

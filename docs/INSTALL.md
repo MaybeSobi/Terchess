@@ -10,7 +10,7 @@ For a quick overview of Terchess, see the [README](../README.md).
 
 ## One-command installation (recommended)
 
-Run the command for your operating system. The installer downloads the latest stable Terchess release, prepares the app folder, installs Python dependencies, registers a `terchess` terminal command, and launches the game. After installation, type `terchess` from any directory to start it again. No desktop shortcut or manual search for the app folder is required. On repeat installs, the installer preserves the existing `.venv`, checks declared dependencies, and refreshes the Terchess package without rebuilding that environment.
+Run the command for your operating system. By default, the one-command installer downloads Terchess from the current `main` branch (not the latest tagged release), prepares the app folder, installs Python dependencies, registers a `terchess` terminal command, and launches the game. It also checks for a compatible Stockfish installation and downloads the latest stable Stockfish build when needed. After installation, type `terchess` from any directory to start it again. No desktop shortcut or manual search for the app folder is required. On repeat installs, the installer preserves the existing `.venv`, checks declared dependencies, and refreshes the Terchess package without rebuilding that environment.
 
 **Windows — PowerShell:**
 
@@ -75,7 +75,7 @@ After extraction, you should have a folder named `Terchess-1.1.6`. Open a termin
 
 ### Quick launch — manually extracted ZIP
 
-After extracting the ZIP, you can launch Terchess with the script for your operating system. You can double-click the launcher after Python is installed, or run it from the terminal. On the first launch, it creates a local `.venv` folder and installs Terchess's Python dependencies automatically. Later launches reuse that environment and start the game directly.
+After extracting the ZIP, you can launch Terchess with the script for your operating system. You can double-click the launcher after Python is installed, or run it from the terminal. On the first launch, it creates a local `.venv` folder and installs Terchess's Python dependencies automatically. Later launches reuse that environment and start the game directly. On macOS/Linux, if executable permissions were not preserved by your ZIP extraction tool, run `chmod +x run_terchess.command run_terchess.sh` once from the project root.
 
 - **Windows:** double-click `run_terchess.bat`.
 - **macOS:** double-click `run_terchess.command`; it opens Terminal and runs Terchess.

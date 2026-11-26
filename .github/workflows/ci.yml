@@ -41,7 +41,10 @@ jobs:
         run: python -m terchess --version
       - name: Validate Unix installers and launchers
         if: runner.os != 'Windows'
-        run: bash -n installers/install-linux.sh installers/install-macos.sh installers/install-termux.sh run_terchess.sh run_terchess.command
+        run: |
+          bash -n installers/install-linux.sh installers/install-macos.sh installers/install-termux.sh run_terchess.sh run_terchess.command
+          test -x run_terchess.sh
+          test -x run_terchess.command
       - name: Validate PowerShell installer
         if: runner.os == 'Windows'
         shell: pwsh

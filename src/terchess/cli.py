@@ -6,6 +6,7 @@ import argparse
 import asyncio
 import sqlite3
 from dataclasses import dataclass
+from pathlib import Path
 
 import chess
 import chess.engine
@@ -118,9 +119,18 @@ def show_settings(settings: GameSettings) -> None:
     ))
 
 
-def _settings_config(settings: GameSettings, stockfish_path: str | None) -> dict[str, object]:
+def _settings_config(
+    settings: GameSettings,
+    stockfish_path: str | None,
+    stockfish_engines: list[dict[str, str]] | None = None,
+    remember_engine_choice: bool = True,
+    deferred_version: str | None = None,
+) -> dict[str, object]:
     return {
         "stockfish_path": stockfish_path,
+        "stockfish_engines": stockfish_engines or [],
+        "remember_engine_choice": remember_engine_choice,
+        "stockfish_deferred_version": deferred_version,
         "skill_level": settings.skill_level,
         "human_color": "white" if settings.human_color == chess.WHITE else "black",
         "time_control_key": settings.time_control_key,
@@ -128,14 +138,81 @@ def _settings_config(settings: GameSettings, stockfish_path: str | None) -> dict
     }
 
 
-def _save_preferences(settings: GameSettings, stockfish_path: str | None, *, announce: bool = False) -> None:
+def _save_preferences(
+    settings: GameSettings,
+    stockfish_path: str | None,
+    stockfish_engines: list[dict[str, str]] | None = None,
+    remember_engine_choice: bool = True,
+    deferred_version: str | None = None,
+    *,
+    announce: bool = False,
+) -> None:
     """Persist settings without making an unwritable config file fatal."""
     try:
-        destination = save_config(_settings_config(settings, stockfish_path))
+        destination = save_config(_settings_config(
+            settings, stockfish_path, stockfish_engines,
+            remember_engine_choice, deferred_version,
+        ))
         if announce:
             console.print(f"[green]Preferences saved to {destination}[/green]")
     except OSError as exc:
         console.print(f"[yellow]Warning: could not save preferences: {exc}[/yellow]")
+
+
+def _available_engine_catalog(config: dict[str, object]) -> list[dict[str, str]]:
+    """Return saved engine choices whose executable files are still present."""
+    raw = config.get("stockfish_engines")
+    entries: list[dict[str, str]] = []
+    seen: set[str] = set()
+
+    def add(path_value: object, version_value: object = "Unknown") -> None:
+        if not isinstance(path_value, str) or not path_value.strip():
+            return
+        path = Path(path_value.strip()).expanduser()
+        if not path.is_file():
+            return
+        try:
+            resolved = str(path.resolve())
+        except OSError:
+            resolved = str(path)
+        identity = str(path.resolve()).casefold() if os.name == "nt" else str(path.resolve())
+        if identity in seen:
+            return
+        version = version_value.strip() if isinstance(version_value, str) else "Unknown"
+        entries.append({"path": resolved, "version": version or "Unknown"})
+        seen.add(identity)
+
+    if isinstance(raw, list):
+        for item in raw:
+            if isinstance(item, dict):
+                add(item.get("path"), item.get("version"))
+    add(config.get("stockfish_path"))
+    return entries
+
+
+def _choose_stockfish_engine(
+    engines: list[dict[str, str]],
+    current_path: str | None,
+) -> tuple[str | None, bool]:
+    """Show the installed-engine chooser and ask whether to remember its choice."""
+    if not engines:
+        return None, False
+
+    table = Table(title="Choose a Stockfish engine", header_style="bold cyan")
+    table.add_column("#", justify="center", width=4)
+    table.add_column("Version", style="bold")
+    table.add_column("Executable")
+    default = "1"
+    for index, engine_info in enumerate(engines, start=1):
+        version = engine_info.get("version", "Unknown")
+        table.add_row(str(index), f"Stockfish {version}" if version != "Unknown" else "Stockfish", engine_info["path"])
+        if current_path and os.path.normcase(os.path.abspath(engine_info["path"])) == os.path.normcase(os.path.abspath(current_path)):
+            default = str(index)
+    console.print(Panel(table, title="Installed engines", border_style="bright_green"))
+    selected = Prompt.ask("Select engine", choices=[str(i) for i in range(1, len(engines) + 1)], default=default)
+    selected_path = engines[int(selected) - 1]["path"]
+    remember_answer = Prompt.ask("Remember my choice? [y/N]", choices=["y", "n"], default="n").lower()
+    return selected_path, remember_answer == "y"
 
 
 def _settings_from_config(config: dict[str, object]) -> GameSettings:
@@ -304,13 +381,21 @@ def main() -> None:
         description="Terchess (Terminal + Chess): offline terminal chess.",
     )
     parser.add_argument("--engine", help="Temporarily override the saved Stockfish executable path")
+    parser.add_argument(
+        "--choose-engine",
+        action="store_true",
+        help="Show the Stockfish selector even when a preferred engine is remembered",
+    )
     parser.add_argument("--version", action="version", version=f"Terchess {__version__}")
     args = parser.parse_args()
 
     saved_config = load_config()
     settings = _settings_from_config(saved_config)
+    engine_catalog = _available_engine_catalog(saved_config)
     saved_engine_path = saved_config.get("stockfish_path")
     persistent_engine_path = saved_engine_path if isinstance(saved_engine_path, str) else None
+    remember_engine_choice = bool(saved_config.get("remember_engine_choice", True))
+    deferred_version = saved_config.get("stockfish_deferred_version")
     preferred_engine_path = args.engine or persistent_engine_path
     explicit_engine_override = args.engine is not None
     engine: chess.engine.SimpleEngine | None = None
@@ -323,6 +408,30 @@ def main() -> None:
     ))
 
     try:
+        if not explicit_engine_override and len(engine_catalog) > 1 and (
+            not remember_engine_choice or args.choose_engine
+        ):
+            selected_path, remember = _choose_stockfish_engine(engine_catalog, persistent_engine_path)
+            if selected_path:
+                preferred_engine_path = selected_path
+                remember_engine_choice = remember
+                if remember:
+                    persistent_engine_path = selected_path
+                try:
+                    save_config(_settings_config(
+                        settings,
+                        persistent_engine_path if remember else (
+                            persistent_engine_path
+                        ),
+                        engine_catalog,
+                        remember_engine_choice,
+                        deferred_version if isinstance(deferred_version, str) else None,
+                    ))
+                except OSError as exc:
+                    console.print(f"[yellow]Warning: could not save engine choice: {exc}[/yellow]")
+        elif not preferred_engine_path and len(engine_catalog) == 1:
+            preferred_engine_path = engine_catalog[0]["path"]
+
         while True:
             console.print()
             show_settings(settings)
@@ -340,6 +449,8 @@ def main() -> None:
             if choice == "1":
                 if engine is None:
                     engine_path = find_engine(preferred_engine_path) if preferred_engine_path else find_engine()
+                    if engine_path is None and preferred_engine_path and not explicit_engine_override:
+                        engine_path = find_engine()
                     if engine_path is None:
                         engine_path = _ask_engine_path()
                     if engine_path is None:
@@ -352,10 +463,14 @@ def main() -> None:
                         engine = None
                         preferred_engine_path = None
                         continue
-                    if not explicit_engine_override:
+                    if not explicit_engine_override and remember_engine_choice:
                         persistent_engine_path = engine_path
                         preferred_engine_path = engine_path
-                        _save_preferences(settings, persistent_engine_path)
+                        _save_preferences(
+                            settings, persistent_engine_path, engine_catalog,
+                            remember_engine_choice,
+                            deferred_version if isinstance(deferred_version, str) else None,
+                        )
                 asyncio.run(play_game(
                     engine, settings.skill_level, settings.human_color,
                     settings.base_seconds, settings.increment_seconds, console,
@@ -363,7 +478,11 @@ def main() -> None:
                 ))
             elif choice == "2":
                 settings.show_board = not settings.show_board
-                _save_preferences(settings, persistent_engine_path)
+                _save_preferences(
+                    settings, persistent_engine_path, engine_catalog,
+                    remember_engine_choice,
+                    deferred_version if isinstance(deferred_version, str) else None,
+                )
                 mode_name = "Board view" if settings.show_board else "Blindfold / text-only"
                 console.print(f"[green]Display mode set to: {mode_name}[/green]")
             elif choice == "3":

@@ -34,6 +34,10 @@ def test_large_board_uses_full_size_when_terminal_allows_it() -> None:
     assert _board_cell_dimensions(160, 50, wide_layout=True, board_scale="large") == (8, 4)
 
 
+def test_board_cells_shrink_on_a_narrow_terminal() -> None:
+    assert _board_cell_dimensions(30, 24, wide_layout=False, board_scale="large") == (3, 2)
+
+
 def test_board_respects_short_terminal_height() -> None:
     cell_width, cell_height = _board_cell_dimensions(120, 16, wide_layout=True)
 

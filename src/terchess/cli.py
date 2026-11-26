@@ -255,12 +255,12 @@ def settings_menu(
         elif choice == "3":
             settings.time_control_key = _ask_time_control(settings.time_control_key)
         elif choice == "4":
-            labels = {"1": "compact", "2": "normal", "3": "large"}
-            console.print("  1 · Compact — pieces fill more of each square\n  2 · Normal — balanced board size\n  3 · Large — larger squares")
+            labels = {"1": "auto", "2": "compact", "3": "normal", "4": "large"}
+            console.print("  1 · Auto — adapt to terminal size\n  2 · Compact — pieces fill more of each square\n  3 · Normal — balanced board size\n  4 · Large — larger squares")
             selected = Prompt.ask(
                 "Board size",
                 choices=list(labels),
-                default={"compact": "1", "normal": "2", "large": "3"}.get(settings.board_scale, "1"),
+                default={"auto": "1", "compact": "2", "normal": "3", "large": "4"}.get(settings.board_scale, "2"),
             )
             settings.board_scale = labels[selected]
         else:

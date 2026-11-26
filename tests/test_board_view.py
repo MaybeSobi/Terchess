@@ -90,11 +90,8 @@ def test_compact_piece_symbols_remain_centered() -> None:
             assert lines[0].strip() == piece.unicode_symbol()
 
 
-def test_larger_board_sizes_render_solid_block_piece_art() -> None:
-    from terchess.board_view import _BLOCK_GLYPHS, _PIECE_MASKS, _piece_cell_lines
-
-    allowed_glyphs = set(_BLOCK_GLYPHS.values())
-    assert all(len(mask) == 16 and all(len(row) == 16 for row in mask) for mask in _PIECE_MASKS.values())
+def test_native_chess_glyphs_are_used_at_every_board_size() -> None:
+    from terchess.board_view import _piece_cell_lines
 
     for color in (chess.WHITE, chess.BLACK):
         for piece_type in (
@@ -102,25 +99,11 @@ def test_larger_board_sizes_render_solid_block_piece_art() -> None:
             chess.ROOK, chess.QUEEN, chess.KING,
         ):
             piece = chess.Piece(piece_type, color)
-            for width, height in ((4, 2), (6, 3), (8, 4)):
+            for width, height in ((2, 1), (4, 2), (6, 3), (8, 4)):
                 lines = _piece_cell_lines(piece, width, height)
                 assert len(lines) == height
-                assert all(len(line) == width for line in lines)
-                assert any(char != " " for line in lines for char in line)
-                assert all(char in allowed_glyphs for line in lines for char in line)
-
-
-def test_piece_art_scales_with_board_size() -> None:
-    from terchess.board_view import _piece_cell_lines
-
-    piece = chess.Piece(chess.QUEEN, chess.WHITE)
-    compact = _piece_cell_lines(piece, 4, 2)
-    normal = _piece_cell_lines(piece, 6, 3)
-    large = _piece_cell_lines(piece, 8, 4)
-
-    assert len("".join(large)) > len("".join(normal)) > len("".join(compact))
-    assert compact != normal
-    assert normal != large
+                assert lines[height // 2].strip() == piece.unicode_symbol()
+                assert sum(line.count(piece.unicode_symbol()) for line in lines) == 1
 
 
 def test_piece_foreground_colors_are_consistent_on_every_square() -> None:

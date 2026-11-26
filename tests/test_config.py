@@ -62,11 +62,12 @@ def test_corrupt_config_does_not_crash(tmp_path):
 
 def test_legacy_config_gets_safe_engine_selection_defaults(tmp_path):
     path = tmp_path / "legacy.json"
-    path.write_text('{"stockfish_path": "/usr/games/stockfish"}', encoding="utf-8")
+    engine_path = str(tmp_path / "stockfish")
+    path.write_text(json.dumps({"stockfish_path": engine_path}), encoding="utf-8")
 
     config = load_config(path)
 
-    assert config["stockfish_path"] == "/usr/games/stockfish"
+    assert config["stockfish_path"] == engine_path
     assert config["stockfish_engines"] == []
     assert config["remember_engine_choice"] is True
     assert config["stockfish_deferred_version"] is None

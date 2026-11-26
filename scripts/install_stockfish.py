@@ -595,7 +595,7 @@ def main() -> int:
                 (item["version"] for item in existing if selected and _path_identity(item["path"]) == _path_identity(selected)),
                 None,
             )
-            if len(existing) > 1 and not catalog_was_multiple and selected_version != latest:
+            if len(existing) > 1 and not catalog_was_multiple and (selected_version is None or not same_version(selected_version, latest)):
                 remember = False
             save_config(existing, selected, remember, None)
             info(f"Stockfish {latest} is already installed. No engine download is needed.")

@@ -18,7 +18,7 @@ from rich.prompt import Prompt
 from rich.table import Table
 
 from terchess import __version__
-from terchess.board_view import board_table, move_history
+from terchess.board_view import BOARD_THEMES, board_table, move_history
 from terchess.clock import color_name
 from terchess.config import get_config_path, load_config, save_config
 from terchess.engine import find_engine
@@ -49,6 +49,7 @@ class GameSettings:
     time_control_key: str = "3"
     show_board: bool = True
     board_scale: str = "compact"
+    board_theme: str = "classic"
 
     @property
     def base_seconds(self) -> int:
@@ -117,7 +118,8 @@ def show_settings(settings: GameSettings) -> None:
         f"[bold]Your side:[/bold] {color_name(settings.human_color)}\n"
         f"[bold]Time control:[/bold] {settings.time_control_label}\n"
         f"[bold]Display mode:[/bold] {'Board view' if settings.show_board else 'Blindfold (text-only)'}\n"
-        f"[bold]Board size:[/bold] {settings.board_scale.title()}",
+        f"[bold]Board size:[/bold] {settings.board_scale.title()}\n"
+        f"[bold]Board colors:[/bold] {BOARD_THEMES.get(settings.board_theme, BOARD_THEMES['classic'])['label']}",
         title="Current settings", border_style="cyan",
     ))
 
@@ -139,6 +141,7 @@ def _settings_config(
         "time_control_key": settings.time_control_key,
         "show_board": settings.show_board,
         "board_scale": settings.board_scale,
+        "board_theme": settings.board_theme,
     }
 
 
@@ -226,7 +229,36 @@ def _settings_from_config(config: dict[str, object]) -> GameSettings:
         time_control_key=str(config["time_control_key"]),
         show_board=bool(config["show_board"]),
         board_scale=str(config.get("board_scale", "compact")),
+        board_theme=str(config.get("board_theme", "classic")),
     )
+
+
+def _ask_board_theme(current: str) -> str:
+    """Show the available board palettes and return the selected theme key."""
+    keys = list(BOARD_THEMES)
+    table = Table(title="Board color themes", header_style="bold cyan")
+    table.add_column("#", justify="center", width=4)
+    table.add_column("Theme")
+    table.add_column("Preview", justify="center")
+    for index, key in enumerate(keys, start=1):
+        palette = BOARD_THEMES[key]
+        preview = Text()
+        preview.append("    ", style=f"on {palette['light']}")
+        preview.append("    ", style=f"on {palette['dark']}")
+        marker = " *" if key == current else ""
+        table.add_row(f"{index}{marker}", palette["label"], preview)
+    console.print(table)
+    choices = {str(index): key for index, key in enumerate(keys, start=1)}
+    current_choice = next(
+        (choice for choice, key in choices.items() if key == current),
+        "1",
+    )
+    selected = Prompt.ask(
+        "Board color theme",
+        choices=list(choices),
+        default=current_choice,
+    )
+    return choices[selected]
 
 
 def settings_menu(
@@ -245,9 +277,10 @@ def settings_menu(
             "  2 · Play as White or Black\n"
             "  3 · Time control\n"
             "  4 · Board size (auto / compact / normal / large)\n"
-            "  5 · Back to main menu"
+            "  5 · Board colors\n"
+            "  6 · Back to main menu"
         )
-        choice = Prompt.ask("Select setting", choices=["1", "2", "3", "4", "5"], default="5")
+        choice = Prompt.ask("Select setting", choices=["1", "2", "3", "4", "5", "6"], default="6")
         if choice == "1":
             settings.skill_level = _ask_skill_level(settings.skill_level)
         elif choice == "2":
@@ -263,6 +296,8 @@ def settings_menu(
                 default={"auto": "1", "compact": "2", "normal": "3", "large": "4"}.get(settings.board_scale, "2"),
             )
             settings.board_scale = labels[selected]
+        elif choice == "5":
+            settings.board_theme = _ask_board_theme(settings.board_theme)
         else:
             return
         _save_preferences(

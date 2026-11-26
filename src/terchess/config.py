@@ -21,8 +21,10 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "time_control_key": "3",
     "show_board": True,
     "board_scale": "compact",
+    "board_theme": "classic",
 }
 VALID_TIME_CONTROL_KEYS = {"1", "2", "3", "4", "5"}
+VALID_BOARD_THEME_KEYS = {"classic", "green", "blue", "pink", "purple"}
 _VERSION_PATTERN = re.compile(r"^\d+(?:\.\d+)*$")
 
 
@@ -102,6 +104,9 @@ def _normalize_config(raw: object) -> dict[str, Any]:
     board_scale = raw.get("board_scale")
     if isinstance(board_scale, str) and board_scale in {"auto", "compact", "normal", "large"}:
         result["board_scale"] = board_scale
+    board_theme = raw.get("board_theme")
+    if isinstance(board_theme, str) and board_theme in VALID_BOARD_THEME_KEYS:
+        result["board_theme"] = board_theme
     result["schema_version"] = SCHEMA_VERSION
     return result
 

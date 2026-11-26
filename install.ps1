@@ -239,37 +239,16 @@ if (-not $Python) {
     }
 }
 
-Write-Info "Checking Stockfish..."
-$StockfishPath = Find-StockfishExecutable
-if ($StockfishPath) {
-    Write-Info "Found an existing Stockfish engine: $StockfishPath"
-    Write-Info "Skipping Stockfish installation."
-    Save-DetectedStockfishPath -EnginePath $StockfishPath
-} else {
-    Write-Warn "No working Stockfish executable was found on PATH or under C:\Engines."
-
-    if (Get-Command winget -ErrorAction SilentlyContinue) {
-        Write-Info "Trying to install Stockfish with winget..."
-        winget install --id Stockfish.Stockfish --exact --accept-package-agreements --accept-source-agreements
-
-        if ($LASTEXITCODE -ne 0) {
-            Write-Warn "Automatic Stockfish installation was not available. Install it from https://stockfishchess.org/download/."
-        } else {
-            $machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
-            $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-            $env:Path = "$machinePath;$userPath"
-            $StockfishPath = Find-StockfishExecutable
-
-            if ($StockfishPath) {
-                Write-Info "Found the newly installed Stockfish engine: $StockfishPath"
-                Save-DetectedStockfishPath -EnginePath $StockfishPath
-            } else {
-                Write-Warn "Stockfish was installed, but this session could not locate its executable. Terchess will ask for its path when you choose Play vs Stockfish."
-            }
-        }
-    } else {
-        Write-Warn "Install Stockfish separately from https://stockfishchess.org/download/."
-    }
+$helperTemp = Join-Path $env:TEMP ("terchess-stockfish-" + [guid]::NewGuid().ToString("N"))
+New-Item -ItemType Directory -Force -Path $helperTemp | Out-Null
+$helperPath = Join-Path $helperTemp "install_stockfish.py"
+try {
+    Write-Info "Installing the official, checksum-verified Stockfish 19 build..."
+    Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/MaybeSobi/Terchess/main/scripts/install_stockfish.py" -OutFile $helperPath
+    if ($Python -eq "py") { & py -3 $helperPath } else { & python $helperPath }
+    if ($LASTEXITCODE -ne 0) { throw "Stockfish 19 installation or validation failed." }
+} finally {
+    Remove-Item -LiteralPath $helperTemp -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 Write-Info "Finding the latest stable release..."

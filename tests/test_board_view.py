@@ -99,11 +99,17 @@ def test_piece_symbols_are_centered_at_every_board_size() -> None:
 def test_white_and_black_piece_colors_preserve_each_square_background() -> None:
     from terchess.board_view import LIGHT_SQUARE, DARK_SQUARE, _piece_colors
 
+    black_foregrounds = set()
     for background in (LIGHT_SQUARE, DARK_SQUARE):
         white = _piece_colors(chess.Piece(chess.QUEEN, chess.WHITE), background)
         black = _piece_colors(chess.Piece(chess.QUEEN, chess.BLACK), background)
+        black_foregrounds.add(black[0])
         assert white[0] != black[0]
         assert white[1] == black[1] == background
+
+    # Black pieces use the same dark ink on light and dark squares, rather
+    # than alternating between black and pale foregrounds across a rank.
+    assert black_foregrounds == {"#171717"}
 
 
 def test_terminal_redraw_explicitly_clears_and_homes_the_viewport() -> None:

@@ -99,7 +99,7 @@ elif command -v pacman >/dev/null 2>&1; then
 elif command -v zypper >/dev/null 2>&1; then
   install_packages zypper --non-interactive install python3 python3-pip curl unzip
 else
-  echo "Unsupported package manager. Install Python 3.10+, curl, unzip, and Stockfish manually."
+  echo "Unsupported package manager. Install Python 3.10+, curl, and unzip manually."
   echo "Python: https://www.python.org/downloads/"
   echo "Stockfish: https://stockfishchess.org/download/"
   exit 1

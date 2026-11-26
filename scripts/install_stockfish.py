@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install and validate the official Stockfish 19 release for Terchess."""
+"""Install and validate the latest stable official Stockfish release for Terchess."""
 from __future__ import annotations
 
 import hashlib
@@ -18,7 +18,6 @@ import zipfile
 from pathlib import Path
 
 REPOSITORY = "official-stockfish/Stockfish"
-RELEASE_TAG = "sf_19"
 USER_AGENT = "Terchess-Stockfish-Installer"
 
 
@@ -29,6 +28,34 @@ def info(message: str) -> None:
 def request(url: str):
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/vnd.github+json"})
     return urllib.request.urlopen(req, timeout=45)
+
+
+def latest_release() -> tuple[dict, str]:
+    """Return GitHub's latest non-draft, non-prerelease release and its version."""
+    url = f"https://api.github.com/repos/{REPOSITORY}/releases/latest"
+    with request(url) as response:
+        release = json.load(response)
+    if not isinstance(release, dict):
+        raise RuntimeError("GitHub returned an invalid Stockfish release response.")
+    if release.get("draft") or release.get("prerelease"):
+        raise RuntimeError("GitHub did not return a stable Stockfish release.")
+    version = release_version(release)
+    return release, version
+
+
+def release_version(release: dict) -> str:
+    """Extract the Stockfish version from the official release tag or title."""
+    tag = str(release.get("tag_name", ""))
+    match = re.search(r"(?:^|[^A-Za-z0-9])sf[_-](\d+(?:\.\d+)*)", tag, re.IGNORECASE)
+    if not match:
+        title = str(release.get("name", ""))
+        match = re.search(r"\bStockfish\s+(\d+(?:\.\d+)*)\b", title, re.IGNORECASE)
+    if not match:
+        raise RuntimeError(
+            "Could not determine the Stockfish version from the latest official release "
+            f"(tag: {tag or 'missing'}). Refusing to install an unidentifiable build."
+        )
+    return match.group(1)
 
 
 def asset_name() -> str:
@@ -61,7 +88,7 @@ def asset_name() -> str:
     return ""
 
 
-def is_stockfish_19(path: Path) -> bool:
+def is_expected_stockfish(path: Path, version: str) -> bool:
     try:
         result = subprocess.run(
             [str(path)], input="uci\nquit\n", capture_output=True,
@@ -72,7 +99,10 @@ def is_stockfish_19(path: Path) -> bool:
     output = result.stdout + "\n" + result.stderr
     if result.returncode != 0 or "uciok" not in output.splitlines():
         return False
-    if not re.search(r"(?im)^id name .*?\bStockfish 19\b", output):
+    if not re.search(
+        rf"(?im)^id name .*?\bStockfish\s+{re.escape(version)}(?![\d.])",
+        output,
+    ):
         return False
     match = re.search(
         r"(?m)^option name Skill Level type spin default -?\d+ min (-?\d+) max (-?\d+)\s*$",
@@ -98,9 +128,6 @@ def install_dir() -> Path:
         return root / "Terchess" / "engine"
     if platform.system() == "Darwin":
         return Path.home() / "Library/Application Support/Terchess/engine"
-    prefix = os.environ.get("PREFIX", "")
-    if "com.termux" in prefix:
-        return Path.home() / ".local/share/terchess-engine"
     return Path.home() / ".local/share/terchess-engine"
 
 
@@ -168,31 +195,41 @@ def safe_extract(archive: Path, destination: Path) -> None:
 
 
 def main() -> int:
+    release, version = latest_release()
     name = asset_name()
     if not name:
-        raise RuntimeError(f"Stockfish 19 has no official binary for {platform.system()} / {platform.machine()}.")
+        raise RuntimeError(
+            f"Latest official Stockfish {version} has no supported binary for "
+            f"{platform.system()} / {platform.machine()}."
+        )
+
     existing = shutil.which("stockfish") or shutil.which("stockfish.exe")
-    if existing and is_stockfish_19(Path(existing)):
+    if existing and is_expected_stockfish(Path(existing), version):
         engine = Path(existing).resolve()
-        info(f"Using existing official Stockfish 19: {engine}")
+        info(f"Using existing official Stockfish {version}: {engine}")
         save_config(engine)
         return 0
 
-    info(f"Fetching official Stockfish 19 for {platform.system()} / {platform.machine()}...")
-    with request(f"https://api.github.com/repos/{REPOSITORY}/releases/tags/{RELEASE_TAG}") as response:
-        release = json.load(response)
-    assets = {item["name"]: item for item in release.get("assets", [])}
+    info(f"Fetching latest stable official Stockfish {version} for {platform.system()} / {platform.machine()}...")
+    assets = {item.get("name"): item for item in release.get("assets", []) if isinstance(item, dict)}
     asset = assets.get(name)
     if not asset:
-        raise RuntimeError(f"Official release asset not found: {name}")
+        available = ", ".join(sorted(item for item in assets if item))
+        raise RuntimeError(
+            f"Official Stockfish {version} asset not found: {name}. "
+            f"Assets published in this release: {available or 'none'}"
+        )
     digest = asset.get("digest", "")
     if not digest.startswith("sha256:"):
         raise RuntimeError("GitHub did not provide a SHA-256 digest for the Stockfish asset.")
+    download_url = asset.get("browser_download_url")
+    if not download_url:
+        raise RuntimeError("The official Stockfish release asset has no download URL.")
 
     with tempfile.TemporaryDirectory(prefix="terchess-stockfish-") as temp:
         tempdir = Path(temp)
         archive = tempdir / name
-        with request(asset["browser_download_url"]) as response, archive.open("wb") as output:
+        with request(download_url) as response, archive.open("wb") as output:
             shutil.copyfileobj(response, output)
         actual = hashlib.sha256(archive.read_bytes()).hexdigest()
         if actual.lower() != digest.split(":", 1)[1].lower():
@@ -210,12 +247,14 @@ def main() -> int:
         shutil.copy2(source, temporary_engine)
         if os.name != "nt":
             temporary_engine.chmod(temporary_engine.stat().st_mode | 0o111)
-        if not is_stockfish_19(temporary_engine):
+        if not is_expected_stockfish(temporary_engine, version):
             temporary_engine.unlink(missing_ok=True)
-            raise RuntimeError("Downloaded engine failed Stockfish 19 UCI/version/Skill Level validation.")
+            raise RuntimeError(
+                f"Downloaded engine failed Stockfish {version} UCI/version/Skill Level validation."
+            )
         os.replace(temporary_engine, destination)
     save_config(destination)
-    info(f"Installed and validated official Stockfish 19: {destination}")
+    info(f"Installed and validated latest official Stockfish {version}: {destination}")
     return 0
 
 

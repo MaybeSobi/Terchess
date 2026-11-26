@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 
 import chess
 from rich.align import Align
@@ -12,6 +13,7 @@ from rich.table import Table
 from rich.text import Text
 
 from terchess.clock import ChessClock, color_name, format_clock
+from terchess.config import load_config
 
 LIGHT_SQUARE = "#F0D9B5"
 DARK_SQUARE = "#B58863"
@@ -81,26 +83,37 @@ def _board_cell_dimensions(
     terminal_width: int,
     terminal_height: int,
     wide_layout: bool | None = None,
+    board_scale: str = "compact",
 ) -> tuple[int, int]:
-    """Choose responsive chess-square dimensions for the available terminal area.
+    """Return board cell dimensions for the selected size and live terminal area.
 
-    Terminal character cells are taller than they are wide, so each square uses
-    multiple text rows as it grows. The height budget keeps the board visible
-    above the move prompt on short terminals.
+    Compact cells keep piece glyphs visually prominent. Larger presets add
+    square padding/height; the terminal itself controls the actual font size.
     """
     if wide_layout is None:
         wide_layout = terminal_width >= 100
 
-    # In the two-column layout, reserve room for the fixed-width information
-    # sidebar and the panel frame. In the stacked layout, the board gets nearly
-    # the entire terminal width.
-    available_width = terminal_width - (54 if wide_layout else 12)
-    max_cell_width = max(3, min(12, available_width // 8))
-    max_rank_height = max(1, min(4, max(0, terminal_height - 8) // 8))
-
-    cell_height = min(max_rank_height, max(1, (max_cell_width + 2) // 3))
-    cell_width = min(max_cell_width, cell_height * 3)
+    available_width = max(24, terminal_width - (54 if wide_layout else 12))
+    available_rank_height = max(1, (terminal_height - (12 if wide_layout else 18)) // 8)
+    presets = {
+        "compact": (3, 1),
+        "normal": (5, 1),
+        "large": (7, 2),
+    }
+    target_width, target_height = presets.get(board_scale, presets["compact"])
+    cell_width = min(target_width, max(3, available_width // 8))
+    cell_height = min(target_height, available_rank_height)
     return cell_width, cell_height
+
+
+def _live_terminal_size(console: Console) -> tuple[int, int]:
+    """Read the current terminal dimensions instead of relying on startup size."""
+    try:
+        size = os.get_terminal_size(console.file.fileno())
+        return max(40, size.columns), max(12, size.lines)
+    except (AttributeError, OSError, ValueError):
+        size = shutil.get_terminal_size(fallback=(console.width, console.height))
+        return max(40, size.columns), max(12, size.lines)
 
 
 def board_table(
@@ -217,22 +230,36 @@ def render_position(
     game_label: str | None = None,
 ) -> None:
     """Clear and render the board plus a live-clock snapshot and move history."""
-    console.clear()
     if is_termux():
+        console.clear()
         _render_termux_position(
             console, board, human_color, skill_level, clock, time_control_name,
             notice, opening_name, game_label,
         )
         return
+
+    terminal_width, terminal_height = _live_terminal_size(console)
+    # Rich's Console captures dimensions when it is created. Recreate the
+    # renderer for each board refresh so Windows Terminal resizes are honored.
+    console = Console(
+        file=console.file,
+        width=terminal_width,
+        height=terminal_height,
+        force_terminal=console.is_terminal,
+        color_system=console.color_system,
+    )
+    console.clear()
     side_name = color_name(human_color)
     turn_name = f"{color_name(board.turn)} to move"
     header = Text(
         f"TERCHESS  |  {side_name}  |  {f'Skill {skill_level}/20' if skill_level is not None else (game_label or 'Local game')}  |  {time_control_name}",
         style="bold bright_white",
     )
-    wide_layout = console.width >= 100
+    wide_layout = terminal_width >= 100
+    board_scale = str(load_config().get("board_scale", "compact"))
     cell_width, cell_height = _board_cell_dimensions(
-        console.width, console.height, wide_layout=wide_layout,
+        terminal_width, terminal_height, wide_layout=wide_layout,
+        board_scale=board_scale,
     )
     board_panel = Panel(
         Align(board_table(board, human_color, cell_width, cell_height), align="center"),

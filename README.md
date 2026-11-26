@@ -29,9 +29,13 @@ Terchess brings the full chess experience into your terminal — including a way
 
 | Board View | Blindfold Mode |
 |:--:|:--:|
-| An adaptive-size, colored chessboard that grows to use the available terminal space, with move highlights, clocks, and move history. | A text-only game: follow algebraic moves and keep the position in your head. |
+| An adaptive-size, classically colored chessboard that grows to use the available terminal space, with native Unicode chess symbols, move highlights, clocks, and move history. | A text-only game: follow algebraic moves and keep the position in your head. |
 
 Choose the way you want to think about chess. Switch display modes in the app.
+
+### Why don't the chess symbols grow with the board?
+
+Terchess uses the terminal's native Unicode chess characters (`♔ ♕ ♖ ♗ ♘ ♙`) so the pieces keep their familiar, consistent appearance. These symbols are text glyphs supplied by the terminal font, not images that the application can resize independently. Terchess can enlarge the board squares and add empty space around each symbol, but it cannot make just one glyph taller or wider while keeping the terminal's character grid aligned. Increasing the terminal font size would enlarge the entire interface — including labels, clocks, and move history — not only the pieces. For that reason, the board is responsive while the chess symbols remain at the terminal's normal font size.
 
 ## Features
 

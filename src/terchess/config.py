@@ -100,7 +100,7 @@ def _normalize_config(raw: object) -> dict[str, Any]:
     if isinstance(show_board, bool):
         result["show_board"] = show_board
     board_scale = raw.get("board_scale")
-    if isinstance(board_scale, str) and board_scale in {"compact", "normal", "large"}:
+    if isinstance(board_scale, str) and board_scale in {"auto", "compact", "normal", "large"}:
         result["board_scale"] = board_scale
     result["schema_version"] = SCHEMA_VERSION
     return result

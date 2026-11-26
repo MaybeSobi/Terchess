@@ -71,7 +71,7 @@ Download **[Terchess-1.1.6.zip](https://github.com/MaybeSobi/Terchess/releases/d
 - **macOS:** Double-click the ZIP in Finder; macOS extracts the folder beside it.
 - **Kali/Linux:** You can extract the ZIP with your file manager, or install and use `unzip` as shown below.
 
-After extraction, you should have a folder named `Terchess-1.1.0`. Open a terminal **inside that folder**. The project root is the folder containing `pyproject.toml` and the `src` directory. The `cd` examples below assume you extracted it into Downloads; adjust the path if you chose another location.
+After extraction, you should have a folder named `Terchess-1.1.6`. Open a terminal **inside that folder**. The project root is the folder containing `pyproject.toml` and the `src` directory. The `cd` examples below assume you extracted it into Downloads; adjust the path if you chose another location.
 
 ### Quick launch — manually extracted ZIP
 
@@ -91,7 +91,7 @@ Before using a launcher, install **Python 3.10 or newer**. On Kali/Debian/Ubuntu
 First, open PowerShell and move into the extracted project folder:
 
 ```powershell
-cd "$HOME\Downloads\Terchess-1.1.0"
+cd "$HOME\Downloads\Terchess-1.1.6"
 Get-ChildItem pyproject.toml
 ```
 
@@ -112,7 +112,7 @@ The first install downloads the libraries listed by the project automatically. Y
 **If PowerShell blocks activation:** open Command Prompt (CMD) and run these commands instead. The first path assumes the project is in your Downloads folder:
 
 ```bat
-cd /d "%USERPROFILE%\Downloads\Terchess-1.1.0"
+cd /d "%USERPROFILE%\Downloads\Terchess-1.1.6"
 py -3 -m venv .venv
 .venv\Scripts\activate.bat
 python -m pip install --upgrade pip
@@ -162,7 +162,7 @@ The `[dev]` extra installs `pytest`; it is not required just to play.
 Download [Terchess-1.1.6.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.1.6/Terchess-1.1.6.zip) from the [stable release page](https://github.com/MaybeSobi/Terchess/releases/tag/v1.1.6). In Finder, double-click the ZIP to extract it. If you saved it to Downloads, open Terminal and enter the extracted project folder:
 
 ```bash
-cd "$HOME/Downloads/Terchess-1.1.0"
+cd "$HOME/Downloads/Terchess-1.1.6"
 ls pyproject.toml
 ```
 
@@ -192,7 +192,7 @@ python -m pytest -q
 When you open a new Terminal window later, return to the project directory and reactivate the environment:
 
 ```bash
-cd "$HOME/Downloads/Terchess-1.1.0"
+cd "$HOME/Downloads/Terchess-1.1.6"
 source .venv/bin/activate
 terchess
 ```
@@ -211,7 +211,7 @@ Download `Terchess-1.1.6.zip` from the [releases page](https://github.com/MaybeS
 ```bash
 mkdir -p ~/Projects
 unzip ~/Downloads/Terchess-1.1.6.zip -d ~/Projects
-cd ~/Projects/Terchess-1.1.0
+cd ~/Projects/Terchess-1.1.6
 ls
 ```
 

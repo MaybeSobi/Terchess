@@ -76,147 +76,6 @@ function Get-PythonCommand {
     return $null
 }
 
-function Test-StockfishExecutable {
-    param([Parameter(Mandatory=$true)][string]$Path)
-
-    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
-        return $false
-    }
-
-    # Probe with a timeout and require the full Skill Level 0-20 range.
-    $probeScript = @'
-import re
-import subprocess
-import sys
-
-try:
-    result = subprocess.run(
-        [sys.argv[1]],
-        input="uci\nquit\n",
-        capture_output=True,
-        text=True,
-        timeout=8,
-        check=False,
-    )
-except (OSError, subprocess.SubprocessError):
-    raise SystemExit(1)
-
-if result.returncode != 0 or "uciok" not in result.stdout.splitlines():
-    raise SystemExit(1)
-
-match = re.search(
-    r"(?m)^option name Skill Level type spin default -?\d+ min (-?\d+) max (-?\d+)\s*$",
-    result.stdout,
-)
-if not match:
-    raise SystemExit(1)
-
-minimum, maximum = map(int, match.groups())
-raise SystemExit(0 if minimum <= 0 and maximum >= 20 else 1)
-'@
-
-    try {
-        if ($Python -eq "py") {
-            $pythonArgs = @("-3", "-c", $probeScript, $Path)
-        } else {
-            $pythonArgs = @("-c", $probeScript, $Path)
-        }
-        & $Python @pythonArgs 2>$null | Out-Null
-        return ($LASTEXITCODE -eq 0)
-    } catch {
-        return $false
-    }
-}
-
-function Find-StockfishExecutable {
-    $candidates = New-Object System.Collections.Generic.List[string]
-
-    # First check commands visible through PATH.
-    foreach ($commandName in @("stockfish", "stockfish.exe")) {
-        $commands = Get-Command $commandName -CommandType Application -ErrorAction SilentlyContinue
-        foreach ($command in $commands) {
-            if ($command.Source) { $candidates.Add($command.Source) }
-        }
-    }
-
-    # Check common manual-install locations.
-    foreach ($candidate in @(
-        "C:\Engines\stockfish-windows-x86-64-universal\stockfish",
-        "C:\Engines\stockfish-windows-x86-64-universal\stockfish.exe",
-        "C:\Program Files\Stockfish\stockfish.exe",
-        "C:\Program Files\Stockfish\stockfish-windows-x86-64-avx2.exe",
-        (Join-Path $env:LOCALAPPDATA "Programs\Stockfish\stockfish.exe")
-    )) {
-        if ($candidate) { $candidates.Add($candidate) }
-    }
-
-    # Also discover manually extracted builds anywhere under C:\Engines.
-    $enginesRoot = "C:\Engines"
-    if (Test-Path -LiteralPath $enginesRoot -PathType Container) {
-        $engineFiles = Get-ChildItem -LiteralPath $enginesRoot -Filter "stockfish*" -File -Recurse -ErrorAction SilentlyContinue |
-            Where-Object { $_.Name -match '^stockfish(?:[-_].*)?(?:\.exe)?$' }
-
-        foreach ($engineFile in $engineFiles) {
-            $candidates.Add($engineFile.FullName)
-        }
-    }
-
-    foreach ($candidate in ($candidates | Select-Object -Unique)) {
-        if (Test-StockfishExecutable -Path $candidate) {
-            return (Resolve-Path -LiteralPath $candidate).Path
-        }
-    }
-
-    return $null
-}
-
-function Save-DetectedStockfishPath {
-    param([Parameter(Mandatory=$true)][string]$EnginePath)
-
-    $configDirectory = Join-Path $env:APPDATA "Terchess"
-    $configPath = Join-Path $configDirectory "config.json"
-    New-Item -ItemType Directory -Force -Path $configDirectory | Out-Null
-
-    if (Test-Path -LiteralPath $configPath -PathType Leaf) {
-        try {
-            $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
-            if ($null -eq $config -or $config -isnot [pscustomobject]) {
-                Write-Warn "Existing Terchess settings are not a JSON object. I left them unchanged."
-                return
-            }
-        } catch {
-            Write-Warn "Existing Terchess settings contain invalid JSON. I left them unchanged; you can set the engine path in Terchess Settings."
-            return
-        }
-    } else {
-        $config = [pscustomobject]@{}
-    }
-
-    # Add or replace only this property; all other existing settings are retained.
-    $config | Add-Member -MemberType NoteProperty -Name "stockfish_path" -Value $EnginePath -Force
-    $json = $config | ConvertTo-Json -Depth 20
-    $utf8WithoutBom = [System.Text.UTF8Encoding]::new($false)
-    $temporaryPath = "$configPath.$([guid]::NewGuid().ToString('N')).tmp"
-
-    try {
-        [System.IO.File]::WriteAllText(
-            $temporaryPath,
-            $json + [Environment]::NewLine,
-            $utf8WithoutBom
-        )
-
-        if (Test-Path -LiteralPath $configPath -PathType Leaf) {
-            [System.IO.File]::Replace($temporaryPath, $configPath, $null)
-        } else {
-            [System.IO.File]::Move($temporaryPath, $configPath)
-        }
-        Write-Info "Saved the detected Stockfish path without changing other Terchess settings."
-    } catch {
-        Remove-Item -LiteralPath $temporaryPath -Force -ErrorAction SilentlyContinue
-        Write-Warn "Could not safely update Terchess settings; the existing config was preserved. Set the engine path in Terchess Settings."
-    }
-}
-
 Write-Info "Checking Python 3.10+..."
 $Python = Get-PythonCommand
 if (-not $Python) {
@@ -239,37 +98,16 @@ if (-not $Python) {
     }
 }
 
-Write-Info "Checking Stockfish..."
-$StockfishPath = Find-StockfishExecutable
-if ($StockfishPath) {
-    Write-Info "Found an existing Stockfish engine: $StockfishPath"
-    Write-Info "Skipping Stockfish installation."
-    Save-DetectedStockfishPath -EnginePath $StockfishPath
-} else {
-    Write-Warn "No working Stockfish executable was found on PATH or under C:\Engines."
-
-    if (Get-Command winget -ErrorAction SilentlyContinue) {
-        Write-Info "Trying to install Stockfish with winget..."
-        winget install --id Stockfish.Stockfish --exact --accept-package-agreements --accept-source-agreements
-
-        if ($LASTEXITCODE -ne 0) {
-            Write-Warn "Automatic Stockfish installation was not available. Install it from https://stockfishchess.org/download/."
-        } else {
-            $machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
-            $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-            $env:Path = "$machinePath;$userPath"
-            $StockfishPath = Find-StockfishExecutable
-
-            if ($StockfishPath) {
-                Write-Info "Found the newly installed Stockfish engine: $StockfishPath"
-                Save-DetectedStockfishPath -EnginePath $StockfishPath
-            } else {
-                Write-Warn "Stockfish was installed, but this session could not locate its executable. Terchess will ask for its path when you choose Play vs Stockfish."
-            }
-        }
-    } else {
-        Write-Warn "Install Stockfish separately from https://stockfishchess.org/download/."
-    }
+$helperTemp = Join-Path $env:TEMP ("terchess-stockfish-" + [guid]::NewGuid().ToString("N"))
+New-Item -ItemType Directory -Force -Path $helperTemp | Out-Null
+$helperPath = Join-Path $helperTemp "install_stockfish.py"
+try {
+    Write-Info "Installing the official, checksum-verified Stockfish 19 build..."
+    Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/MaybeSobi/Terchess/main/scripts/install_stockfish.py" -OutFile $helperPath
+    if ($Python -eq "py") { & py -3 $helperPath } else { & python $helperPath }
+    if ($LASTEXITCODE -ne 0) { throw "Stockfish 19 installation or validation failed." }
+} finally {
+    Remove-Item -LiteralPath $helperTemp -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 Write-Info "Finding the latest stable release..."

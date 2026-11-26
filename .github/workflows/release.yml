@@ -92,7 +92,7 @@ jobs:
           RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           if [[ "$IS_PRERELEASE" == "true" ]]; then
-            RELEASE_NOTES="Terchess $RELEASE_TAG is a release candidate. Download the cross-platform ZIP, extract it, and use the included one-click launcher for Windows, macOS, or Linux. Stockfish must be installed separately. Stockfish must be installed separately."
+            RELEASE_NOTES="Terchess $RELEASE_TAG is a release candidate. Download the cross-platform ZIP, extract it, and use the included one-click launcher for Windows, macOS, or Linux. Stockfish is not bundled in the manual ZIP; one-command installers configure the latest stable official build."
             PRERELEASE_ARGS=(--prerelease)
           else
             RELEASE_NOTES="Terchess $RELEASE_TAG is a stable release. Download the cross-platform Terchess ZIP, extract it, and use run_terchess.bat (Windows), run_terchess.command (macOS), or run_terchess.sh (Linux). On first launch the script installs Python dependencies. One-command installers configure the latest stable official Stockfish; manual ZIP installations require a separate Stockfish setup."

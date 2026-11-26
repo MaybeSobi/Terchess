@@ -87,6 +87,11 @@ def is_newer_version(first: str, second: str) -> bool:
     return left + (0,) * (width - len(left)) > right + (0,) * (width - len(right))
 
 
+def same_version(first: str, second: str) -> bool:
+    """Compare dotted release versions while ignoring trailing zero components."""
+    return not is_newer_version(first, second) and not is_newer_version(second, first)
+
+
 def asset_name() -> str:
     system = platform.system().lower()
     machine = platform.machine().lower()
@@ -187,7 +192,11 @@ def _candidate_name(name: str) -> bool:
     value = name.lower()
     if value in {"stockfish", "stockfish.exe"}:
         return True
-    return value.startswith("stockfish-") and (value.endswith(".exe") or "." not in value)
+    if not value.startswith("stockfish"):
+        return False
+    if os.name == "nt":
+        return value.endswith(".exe")
+    return not value.endswith((".zip", ".tar.gz", ".tgz", ".txt", ".md", ".json", ".sha256"))
 
 
 def search_roots() -> tuple[list[Path], list[Path]]:
@@ -204,7 +213,8 @@ def search_roots() -> tuple[list[Path], list[Path]]:
         home / ".local" / "share" / "terchess-engine",
         home / ".local" / "share" / "stockfish",
     ]
-    direct = [Path(p) for p in os.environ.get("PATH", "").split(os.pathsep) if p]
+    direct = [Path.cwd()]
+    direct.extend(Path(p) for p in os.environ.get("PATH", "").split(os.pathsep) if p)
 
     if platform.system() == "Windows":
         local = Path(os.environ.get("LOCALAPPDATA", home / "AppData/Local"))
@@ -572,7 +582,7 @@ def main() -> int:
 
     if existing:
         best_installed = existing[0]["version"]
-        has_latest = any(item["version"] == latest for item in existing)
+        has_latest = any(same_version(item["version"], latest) for item in existing)
         if has_latest:
             remember = _remember_default(config, existing)
             selected = _configured_engine_path(config, existing)

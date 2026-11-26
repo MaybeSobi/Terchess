@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import chess
+from rich.console import Console
 
-from terchess.board_view import _board_cell_dimensions, board_table
+from terchess.board_view import _board_cell_dimensions, board_table, render_position
+from terchess.clock import ChessClock
 
 
 def test_board_grows_with_available_terminal_space() -> None:
@@ -34,3 +36,19 @@ def test_default_board_remains_compact_for_termux() -> None:
 
     assert len(table.rows) == 9
     assert [column.width for column in table.columns[1:]] == [3] * 8
+
+
+
+def test_wide_layout_uses_the_available_terminal_width() -> None:
+    console = Console(width=120, height=30, record=True)
+    render_position(
+        console,
+        chess.Board(),
+        chess.WHITE,
+        10,
+        ChessClock(180, 0),
+        "3+0",
+    )
+
+    rendered_lines = console.export_text().splitlines()
+    assert max(map(len, rendered_lines)) >= 110

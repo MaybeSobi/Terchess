@@ -576,6 +576,17 @@ def main() -> int:
         if has_latest:
             remember = _remember_default(config, existing)
             selected = _configured_engine_path(config, existing)
+            # If a previously single-engine setup now has a second discovered
+            # version, surface the chooser rather than silently staying on an
+            # older remembered path.
+            previous_catalog = config.get("stockfish_engines")
+            catalog_was_multiple = isinstance(previous_catalog, list) and len(previous_catalog) > 1
+            selected_version = next(
+                (item["version"] for item in existing if selected and _path_identity(item["path"]) == _path_identity(selected)),
+                None,
+            )
+            if len(existing) > 1 and not catalog_was_multiple and selected_version != latest:
+                remember = False
             save_config(existing, selected, remember, None)
             info(f"Stockfish {latest} is already installed. No engine download is needed.")
             if len(existing) > 1 and not remember:

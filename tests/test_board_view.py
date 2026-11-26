@@ -44,8 +44,8 @@ def test_board_respects_short_terminal_height() -> None:
 def test_expanded_board_keeps_all_squares_and_rank_rows() -> None:
     table = board_table(chess.Board(), chess.WHITE, cell_width=6, cell_height=2)
 
-    # Eight ranks, each rendered across three terminal lines, plus file labels.
-    assert len(table.rows) == 25
+    # Eight ranks, each rendered across two terminal lines, plus file labels.
+    assert len(table.rows) == 17
     assert len(table.columns) == 9
     assert [column.width for column in table.columns[1:]] == [6] * 8
 
@@ -121,7 +121,7 @@ def test_terminal_redraw_explicitly_clears_and_homes_the_viewport() -> None:
 
     _clear_rendered_screen(console)
 
-    assert output.getvalue() == "\\x1b[2J\\x1b[H"
+    assert output.getvalue() == "\x1b[2J\x1b[H"
 
 
 def test_each_position_render_starts_with_a_fresh_terminal_viewport() -> None:
@@ -139,6 +139,6 @@ def test_each_position_render_starts_with_a_fresh_terminal_viewport() -> None:
             ChessClock(180, 0), "3+0",
         )
 
-    assert output.getvalue().count("\\x1b[2J\\x1b[H") == 2
+    assert output.getvalue().count("\x1b[2J\x1b[H") == 2
 
 \n

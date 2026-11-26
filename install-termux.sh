@@ -91,95 +91,13 @@ fi
 info "Installing Terchess and its Python dependencies..."
 "$VENV_PYTHON" -m pip install --disable-pip-version-check --force-reinstall "$APP_DIR"
 
-if command -v stockfish >/dev/null 2>&1; then
-  STOCKFISH_PATH="$(command -v stockfish)"
-  info "Validating the Stockfish UCI engine..."
-  if "$PYTHON_BIN" - "$STOCKFISH_PATH" <<'PY'
-import json
-import os
-import re
-import stat
-import subprocess
-import sys
-import tempfile
-from pathlib import Path
-
-engine_path = str(Path(sys.argv[1]).expanduser().resolve())
-try:
-    result = subprocess.run(
-        [engine_path],
-        input="uci\nquit\n",
-        capture_output=True,
-        text=True,
-        timeout=10,
-        check=False,
-    )
-except (OSError, subprocess.SubprocessError) as exc:
-    print(f"Stockfish could not be started: {exc}")
-    raise SystemExit(1)
-
-if result.returncode != 0 or "uciok" not in result.stdout.splitlines():
-    print("Stockfish did not complete a successful UCI handshake.")
-    raise SystemExit(1)
-
-match = re.search(
-    r"(?m)^option name Skill Level type spin default -?\d+ min (-?\d+) max (-?\d+)\s*$",
-    result.stdout,
-)
-if not match:
-    print("The engine does not expose the UCI Skill Level option.")
-    raise SystemExit(1)
-minimum, maximum = map(int, match.groups())
-if minimum > 0 or maximum < 20:
-    print(f"Stockfish Skill Level range {minimum}–{maximum} does not cover 0–20.")
-    raise SystemExit(1)
-
-xdg_home = os.environ.get("XDG_CONFIG_HOME")
-xdg_path = Path(xdg_home).expanduser() if xdg_home else None
-config_root = xdg_path if xdg_path and xdg_path.is_absolute() else Path.home() / ".config"
-config_path = config_root / "terchess" / "config.json"
-config = {}
-if config_path.exists():
-    try:
-        config = json.loads(config_path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        print(f"Existing settings were left unchanged: {exc}")
-        raise SystemExit(2)
-    if not isinstance(config, dict):
-        print("Existing settings are not a JSON object; they were left unchanged.")
-        raise SystemExit(2)
-
-config["stockfish_path"] = engine_path
-config_path.parent.mkdir(parents=True, exist_ok=True)
-mode = stat.S_IMODE(config_path.stat().st_mode) if config_path.exists() else 0o600
-fd, temporary_path = tempfile.mkstemp(
-    prefix=config_path.name + ".",
-    suffix=".tmp",
-    dir=str(config_path.parent),
-)
-try:
-    with os.fdopen(fd, "w", encoding="utf-8") as stream:
-        json.dump(config, stream, indent=2, ensure_ascii=False)
-        stream.write("\n")
-        stream.flush()
-        os.fsync(stream.fileno())
-    os.chmod(temporary_path, mode)
-    os.replace(temporary_path, config_path)
-except OSError:
-    try:
-        os.unlink(temporary_path)
-    except OSError:
-        pass
-    raise
-print(f"Validated Stockfish Skill Level 0–20 and saved its path to {config_path}.")
-PY
-  then
-    info "Stockfish is ready for computer games."
-  else
-    warn "Stockfish was found but could not be validated or saved; select its path in Terchess Settings."
-  fi
+# Stockfish installation and configuration were completed before the Terchess
+# package install. Do not overwrite the verified official engine path with a
+# potentially older executable exposed by Termux's PATH.
+if [[ "$STOCKFISH_READY" -eq 1 ]]; then
+  info "The official Stockfish engine is installed and configured."
 else
-  warn "No Stockfish engine is installed. Computer games need Stockfish; other modes remain available."
+  info "Stockfish setup was attempted above; check the warning messages if computer play is unavailable."
 fi
 
 mkdir -p "$PREFIX/bin"

@@ -1,14 +1,20 @@
+import json
+import os
+import tarfile
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 
 from install_stockfish import (
     InstallerError,
     expected_asset_name,
+    extract_archive,
     find_release_asset,
     parse_release_version,
     parse_uci_output,
     safe_destination,
+    write_config,
 )
 
 
@@ -65,6 +71,64 @@ uciok
             for name in ("../outside", "/etc/passwd", "stockfish/../../outside", "..\\outside", "C:/outside"):
                 with self.subTest(name=name), self.assertRaises(InstallerError):
                     safe_destination(root, name)
+
+    def test_extract_tar_archive_and_preserve_executable_mode(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            archive_path = root / "stockfish.tar.gz"
+            payload = b"fake linux engine"
+            with tarfile.open(archive_path, "w:gz") as archive:
+                item = tarfile.TarInfo("stockfish/stockfish-linux-x86-64-universal")
+                item.mode = 0o755
+                item.size = len(payload)
+                import io
+                archive.addfile(item, io.BytesIO(payload))
+
+            output = root / "extracted"
+            extract_archive(archive_path, output)
+            engine = output / "stockfish" / "stockfish-linux-x86-64-universal"
+            self.assertEqual(engine.read_bytes(), payload)
+            self.assertTrue(engine.stat().st_mode & 0o100)
+
+    def test_extract_windows_zip_archive(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            archive_path = root / "stockfish.zip"
+            payload = b"fake windows engine"
+            with zipfile.ZipFile(archive_path, "w") as archive:
+                archive.writestr(
+                    "stockfish/stockfish-windows-x86-64-universal.exe",
+                    payload,
+                )
+
+            output = root / "extracted"
+            extract_archive(archive_path, output)
+            engine = output / "stockfish" / "stockfish-windows-x86-64-universal.exe"
+            self.assertEqual(engine.read_bytes(), payload)
+
+    def test_config_write_preserves_existing_preferences(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            config_path = root / "config.json"
+            config_path.write_text(
+                json.dumps({"display_mode": "blindfold", "skill_level": 12}),
+                encoding="utf-8",
+            )
+            engine_path = root / "engines" / "sf_19" / "stockfish"
+            self.assertTrue(write_config(config_path, engine_path))
+            saved = json.loads(config_path.read_text(encoding="utf-8"))
+            self.assertEqual(saved["display_mode"], "blindfold")
+            self.assertEqual(saved["skill_level"], 12)
+            self.assertEqual(saved["stockfish_path"], str(engine_path.resolve()))
+
+    def test_config_write_does_not_overwrite_invalid_settings(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            config_path = root / "config.json"
+            original = "{not valid json"
+            config_path.write_text(original, encoding="utf-8")
+            self.assertFalse(write_config(config_path, root / "stockfish"))
+            self.assertEqual(config_path.read_text(encoding="utf-8"), original)
 
 
 if __name__ == "__main__":

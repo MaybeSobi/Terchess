@@ -100,8 +100,8 @@ def install_dir() -> Path:
         return Path.home() / "Library/Application Support/Terchess/engine"
     prefix = os.environ.get("PREFIX", "")
     if "com.termux" in prefix:
-        return Path.home() / ".local/share/terchess/engine"
-    return Path.home() / ".local/share/terchess/engine"
+        return Path.home() / ".local/share/terchess-engine"
+    return Path.home() / ".local/share/terchess-engine"
 
 
 def save_config(engine: Path) -> None:

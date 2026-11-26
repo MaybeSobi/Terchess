@@ -142,6 +142,48 @@ def test_both_piece_colors_remain_readable_on_all_square_colors() -> None:
             contrast = (lighter + 0.05) / (darker + 0.05)
             assert contrast >= 3.0
 
+
+
+def test_all_board_themes_keep_both_piece_colors_readable() -> None:
+    from terchess.board_view import BLACK_PIECE, BOARD_THEMES, WHITE_PIECE
+
+    def luminance(hex_color: str) -> float:
+        channels = [
+            int(hex_color[index:index + 2], 16) / 255
+            for index in (1, 3, 5)
+        ]
+        linear = [
+            value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4
+            for value in channels
+        ]
+        return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+    for palette in BOARD_THEMES.values():
+        for background in (palette["light"], palette["dark"], palette["last_move"]):
+            background_luminance = luminance(background)
+            for foreground in (WHITE_PIECE, BLACK_PIECE):
+                foreground_luminance = luminance(foreground)
+                lighter, darker = sorted(
+                    (foreground_luminance, background_luminance),
+                    reverse=True,
+                )
+                assert (lighter + 0.05) / (darker + 0.05) >= 3.0
+
+
+def test_board_table_accepts_named_color_themes() -> None:
+    from terchess.board_view import BOARD_THEMES
+
+    for theme in BOARD_THEMES:
+        table = board_table(
+            chess.Board(),
+            chess.WHITE,
+            cell_width=4,
+            cell_height=2,
+            board_theme=theme,
+        )
+        assert len(table.rows) == 17
+
+
 def test_terminal_redraw_explicitly_clears_and_homes_the_viewport() -> None:
     from io import StringIO
     from terchess.board_view import _clear_rendered_screen

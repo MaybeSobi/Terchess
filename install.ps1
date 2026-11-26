@@ -102,7 +102,7 @@ $helperTemp = Join-Path $env:TEMP ("terchess-stockfish-" + [guid]::NewGuid().ToS
 New-Item -ItemType Directory -Force -Path $helperTemp | Out-Null
 $helperPath = Join-Path $helperTemp "install_stockfish.py"
 try {
-    Write-Info "Checking and installing the latest stable official Stockfish build..."
+    Write-Info "Searching for existing Stockfish engines and checking for updates build..."
     Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/MaybeSobi/Terchess/main/scripts/install_stockfish.py" -OutFile $helperPath
     if ($Python -eq "py") { & py -3 $helperPath } else { & python $helperPath }
     if ($LASTEXITCODE -ne 0) { throw "Stockfish installation or validation failed." }

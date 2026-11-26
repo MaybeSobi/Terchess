@@ -57,7 +57,7 @@ fi
 info "Installing Terchess and its Python dependencies..."
 "$VENV_PYTHON" -m pip install --disable-pip-version-check --force-reinstall "$APP_DIR"
 
-info "Checking and installing the latest stable official Stockfish Android build..."
+info "Searching for existing Stockfish engines and checking for updates Android build..."
 curl -fsSL "https://raw.githubusercontent.com/MaybeSobi/Terchess/main/scripts/install_stockfish.py" -o "$TMP_DIR/install_stockfish.py"
 "$PYTHON_BIN" "$TMP_DIR/install_stockfish.py"
 

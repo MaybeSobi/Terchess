@@ -78,7 +78,7 @@ TERCHESS_COMMAND
 }
 
 if ! command -v brew >/dev/null 2>&1; then
-  echo "Homebrew is needed to install Python and Stockfish automatically on macOS."
+  echo "Homebrew is needed to install Python automatically on macOS."
   read -r -p "Install Homebrew now from its official installer? [y/N] " answer
   case "$answer" in
     y|Y|yes|YES)
@@ -103,14 +103,14 @@ fi
 
 info "Installing/checking Python with Homebrew..."
 brew install python || warn "Homebrew reported a Python install issue; checking whether Python is available."
-info "Installing/checking Stockfish with Homebrew..."
+info "Checking local Stockfish installations..."
 
 if ! command -v python3 >/dev/null 2>&1 || ! python3 -c 'import sys; raise SystemExit(0 if sys.version_info >= (3,10) else 1)'; then
   echo "Python 3.10+ is required. Install it from https://www.python.org/downloads/macos/ and rerun."
   exit 1
 fi
 
-info "Checking and installing the latest stable official Stockfish build..."
+info "Searching for existing Stockfish engines and checking for updates build..."
 curl -fsSL "https://raw.githubusercontent.com/MaybeSobi/Terchess/main/scripts/install_stockfish.py" -o "$TMP_DIR/install_stockfish.py"
 python3 "$TMP_DIR/install_stockfish.py"
 

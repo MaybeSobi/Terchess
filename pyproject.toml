@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "terchess"
-version = "1.1.5"
+version = "1.1.6"
 description = "Cross-platform terminal chess with Stockfish, timed Hotseat, SQLite game history, PGN tools, and offline opening recognition"
 readme = "README.md"
 requires-python = ">=3.10"

@@ -12,6 +12,11 @@ def test_preferences_round_trip(tmp_path):
     path = tmp_path / "Terchess" / "config.json"
     original = {
         "stockfish_path": r"C:\Engines\Stockfish\stockfish.exe",
+        "stockfish_engines": [
+            {"path": r"C:\Engines\Stockfish\stockfish.exe", "version": "17.1"},
+            {"path": r"C:\Engines\Stockfish19\stockfish.exe", "version": "19"},
+        ],
+        "remember_engine_choice": False,
         "skill_level": 17,
         "human_color": "black",
         "time_control_key": "2",
@@ -21,6 +26,8 @@ def test_preferences_round_trip(tmp_path):
     loaded = load_config(path)
     assert saved_path == path
     assert loaded["stockfish_path"] == original["stockfish_path"]
+    assert loaded["stockfish_engines"] == original["stockfish_engines"]
+    assert loaded["remember_engine_choice"] is False
     assert loaded["skill_level"] == 17
     assert loaded["human_color"] == "black"
     assert loaded["time_control_key"] == "2"
@@ -50,3 +57,40 @@ def test_corrupt_config_does_not_crash(tmp_path):
     path = tmp_path / "config.json"
     path.write_text("{ broken json", encoding="utf-8")
     assert load_config(path) == DEFAULT_CONFIG
+
+
+
+def test_legacy_config_gets_safe_engine_selection_defaults(tmp_path):
+    path = tmp_path / "legacy.json"
+    engine_path = str(tmp_path / "stockfish")
+    path.write_text(json.dumps({"stockfish_path": engine_path}), encoding="utf-8")
+
+    config = load_config(path)
+
+    assert config["stockfish_path"] == engine_path
+    assert config["stockfish_engines"] == []
+    assert config["remember_engine_choice"] is True
+    assert config["stockfish_deferred_version"] is None
+
+
+def test_engine_catalog_discards_invalid_and_duplicate_entries(tmp_path):
+    path = tmp_path / "config.json"
+    executable = str(tmp_path / "stockfish")
+    path.write_text(json.dumps({
+        "stockfish_engines": [
+            {"path": executable, "version": "19"},
+            {"path": executable, "version": "19"},
+            {"path": "   ", "version": "18"},
+            {"path": "/tmp/other", "version": {"bad": "version"}},
+        ],
+        "remember_engine_choice": "yes",
+        "stockfish_deferred_version": "nightly",
+    }), encoding="utf-8")
+
+    config = load_config(path)
+
+    assert len(config["stockfish_engines"]) == 2
+    assert config["stockfish_engines"][0]["version"] == "19"
+    assert config["stockfish_engines"][1]["version"] == "Unknown"
+    assert config["remember_engine_choice"] is True
+    assert config["stockfish_deferred_version"] is None

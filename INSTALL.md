@@ -38,7 +38,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/inst
 
 The Termux installer uses `pkg` for Python, installs the app from the current `main` branch, creates a private Python environment, downloads the latest stable official Stockfish Android binary, verifies its SHA-256 digest and reported version, and registers `terchess` in Termux's `$PREFIX/bin`. Use this installer inside Termux; **do not use `install-linux.sh` on Android/Termux**, because the Linux installer expects a conventional distribution package manager and may request root privileges.
 
-The installers query the official Stockfish GitHub Releases API each time they run and use its latest stable release on Windows, macOS, Linux, and Termux. They select the matching binary for the system architecture, verify the SHA-256 digest published for that exact release, complete a UCI handshake, confirm the engine identifies itself as the version named by that release, and check the full UCI `Skill Level` range (0–20). An already-installed matching version on PATH is reused; older versions are not silently accepted. When a newer stable Stockfish release is published, rerunning any one-command installer automatically switches Terchess to that version without a script edit. The engine path is saved as `stockfish_path` while preserving other valid Terchess preferences; malformed or non-object settings files are left untouched. Windows installs Python through WinGet when available; Linux and Termux use their package managers for Python, while macOS uses Homebrew.
+Before downloading an engine, the installers search Terchess settings, PATH, standard system locations, common manual-install folders, and user Downloads folders for existing Stockfish binaries. They identify each candidate with a UCI handshake and check that `Skill Level` supports 0–20. If the newest stable official version is already present, it is reused without another engine download. If an older version is found, choose to switch Terchess to the latest engine, install the latest alongside the existing copy, or defer the update. Side-by-side installations are kept in separate versioned folders and registered in the user settings; when more than one engine is retained, Terchess asks which one to use at startup. Selecting **Remember my choice** stores the preferred engine; run `terchess --choose-engine` to show the selector again. New downloads still use the official release asset, verify its published SHA-256 digest, and validate the exact UCI version. Windows installs Python through WinGet when available; Linux and Termux use their package managers for Python, while macOS uses Homebrew.
 
 **Security note:** these commands download and run an installer from this repository. If you prefer to inspect it first, open [install.ps1](install.ps1), [install-macos.sh](install-macos.sh), [install-linux.sh](install-linux.sh), or [install-termux.sh](install-termux.sh) and review the script before running it.
 
@@ -65,7 +65,7 @@ Terchess is a **Python terminal application**, not a standalone Windows `.exe`. 
 
 ### 1. Download and extract the ZIP
 
-Download **[Terchess-1.1.5.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.1.5/Terchess-1.1.5.zip)** from the [stable v1.1.5 release](https://github.com/MaybeSobi/Terchess/releases/tag/v1.1.5), then extract it.
+Download **[Terchess-1.1.6.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.1.6/Terchess-1.1.6.zip)** from the [stable v1.1.6 release](https://github.com/MaybeSobi/Terchess/releases/tag/v1.1.6), then extract it.
 
 - **Windows:** In File Explorer, right-click the ZIP and choose **Extract All…**.
 - **macOS:** Double-click the ZIP in Finder; macOS extracts the folder beside it.
@@ -83,7 +83,7 @@ After extracting the ZIP, you can launch Terchess with the script for your opera
 
 Before using a launcher, install **Python 3.10 or newer**. On Kali/Debian/Ubuntu, ensure `python3-venv` is installed; the manual setup below lists the required system packages. The first launch needs an internet connection to download Python dependencies.
 
-**Stockfish is still a separate one-time install for manual ZIP use.** The one-command installers fetch and configure the latest stable official Stockfish release automatically; manual ZIP users must install the engine and select its executable in Terchess. See the operating-system instructions below for the recommended method. If setup fails, the launcher leaves an error message in the terminal window.
+**Stockfish is still a separate install for manual ZIP use.** The one-command installers discover existing engines and configure the latest stable official Stockfish release when appropriate; manual ZIP users must install the engine and select its executable in Terchess. When multiple engines are registered, use the startup selector or run `terchess --choose-engine` to switch. See the operating-system instructions below for the recommended method. If setup fails, the launcher leaves an error message in the terminal window.
 
 
 ### 2. Windows — PowerShell
@@ -159,7 +159,7 @@ The `[dev]` extra installs `pytest`; it is not required just to play.
 
 #### Download, extract, and enter the project directory
 
-Download [Terchess-1.1.5.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.1.5/Terchess-1.1.5.zip) from the [stable release page](https://github.com/MaybeSobi/Terchess/releases/tag/v1.1.5). In Finder, double-click the ZIP to extract it. If you saved it to Downloads, open Terminal and enter the extracted project folder:
+Download [Terchess-1.1.6.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.1.6/Terchess-1.1.6.zip) from the [stable release page](https://github.com/MaybeSobi/Terchess/releases/tag/v1.1.6). In Finder, double-click the ZIP to extract it. If you saved it to Downloads, open Terminal and enter the extracted project folder:
 
 ```bash
 cd "$HOME/Downloads/Terchess-1.1.0"
@@ -206,11 +206,11 @@ sudo apt update
 sudo apt install -y python3-full python3-venv python3-pip unzip
 ```
 
-Download `Terchess-1.1.5.zip` from the [releases page](https://github.com/MaybeSobi/Terchess/releases), then extract it. For a ZIP saved in Downloads, these commands make a Projects folder, extract the archive, and enter the project root:
+Download `Terchess-1.1.6.zip` from the [releases page](https://github.com/MaybeSobi/Terchess/releases), then extract it. For a ZIP saved in Downloads, these commands make a Projects folder, extract the archive, and enter the project root:
 
 ```bash
 mkdir -p ~/Projects
-unzip ~/Downloads/Terchess-1.1.5.zip -d ~/Projects
+unzip ~/Downloads/Terchess-1.1.6.zip -d ~/Projects
 cd ~/Projects/Terchess-1.1.0
 ls
 ```
@@ -301,7 +301,7 @@ With the virtual environment active, run:
 python -m pytest
 ```
 
-The stable `v1.1.5` release includes adaptive chessboard sizing for regular terminal play, local SQLite game history, PGN import/export and replay, Hotseat multiplayer, offline ECO opening recognition, and lazy Stockfish startup. One-command installers register the `terchess` terminal command on Windows, macOS, Linux, and Android via Termux, and now select the latest stable official Stockfish release automatically. GitHub Actions tests Python 3.10–3.13 on Windows, macOS, and Linux; the Termux installer is syntax-checked in CI, while Android runtime compatibility is validated on-device. The [release checklist](RELEASE_CHECKLIST.md) remains useful when testing future changes.
+The stable `v1.1.6` release includes adaptive chessboard sizing for regular terminal play, local SQLite game history, PGN import/export and replay, Hotseat multiplayer, offline ECO opening recognition, and lazy Stockfish startup. One-command installers register the `terchess` terminal command on Windows, macOS, Linux, and Android via Termux, discover existing Stockfish installations, and offer safe update or side-by-side installation choices. GitHub Actions tests Python 3.10–3.13 on Windows, macOS, and Linux; the Termux installer is syntax-checked in CI, while Android runtime compatibility is validated on-device. The [release checklist](RELEASE_CHECKLIST.md) remains useful when testing future changes.
 
 ## Roadmap
 

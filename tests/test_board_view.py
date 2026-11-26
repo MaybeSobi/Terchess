@@ -8,11 +8,21 @@ from terchess.clock import ChessClock
 
 
 def test_board_grows_with_available_terminal_space() -> None:
-    compact = _board_cell_dimensions(120, 30, wide_layout=True)
-    spacious = _board_cell_dimensions(160, 44, wide_layout=True)
+    compact = _board_cell_dimensions(120, 30, wide_layout=True, board_scale="auto")
+    spacious = _board_cell_dimensions(160, 44, wide_layout=True, board_scale="auto")
 
     assert spacious[0] > compact[0]
     assert spacious[1] > compact[1]
+
+
+def test_board_size_presets_are_distinct() -> None:
+    compact = _board_cell_dimensions(160, 44, wide_layout=True, board_scale="compact")
+    normal = _board_cell_dimensions(160, 44, wide_layout=True, board_scale="normal")
+    large = _board_cell_dimensions(160, 44, wide_layout=True, board_scale="large")
+
+    assert compact == (3, 1)
+    assert normal == (4, 2)
+    assert large == (6, 3)
 
 
 def test_board_respects_short_terminal_height() -> None:

@@ -4,6 +4,12 @@ All notable changes to Terchess are documented here.
 
 ## [Unreleased]
 
+- Add a shared cross-platform Stockfish installer that selects the latest stable official release and matching OS/CPU binary for Linux, macOS, Windows, and Android/Termux.
+- Verify official release asset SHA-256 digests, archive contents, Stockfish UCI identity/version, and Skill Level 0–20 before configuring the engine.
+- Store versioned Stockfish binaries outside the Terchess app folder and preserve existing user settings when saving the engine path.
+- Keep distribution package managers as an explicitly warned fallback when the official release cannot be downloaded or validated.
+- Update installation and troubleshooting documentation to distinguish the one-command installer from manual ZIP setup.
+
 - Add a compact portrait-first Termux game screen with a borderless board, inline clocks, and a short recent-move list.
 - Disable the live prompt toolbar refresh in Termux to prevent prompt-toolkit redraws from interfering with board repainting; desktop rendering remains unchanged.
 

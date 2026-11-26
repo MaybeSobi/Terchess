@@ -34,10 +34,37 @@ if ! "$PYTHON_BIN" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3,
   fail "Python 3.10 or newer is required."
 fi
 
-if ! command -v stockfish >/dev/null 2>&1; then
-  info "Stockfish was not found; attempting to install the optional engine..."
-  if ! pkg install -y stockfish; then
-    warn "Stockfish could not be installed. Terchess will still work for Hotseat, history, PGN, and opening lookup."
+CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+if [[ "$CONFIG_HOME" != /* ]]; then CONFIG_HOME="$HOME/.config"; fi
+CONFIG_PATH="$CONFIG_HOME/terchess/config.json"
+ENGINE_DIR="$HOME/.local/share/terchess-engines"
+STOCKFISH_HELPER="$TMP_DIR/install_stockfish.py"
+STOCKFISH_READY=0
+
+info "Installing the latest official stable Stockfish Android engine..."
+if curl -fsSL --retry 2 "https://raw.githubusercontent.com/${REPO}/main/install_stockfish.py" -o "$STOCKFISH_HELPER"; then
+  if "$PYTHON_BIN" "$STOCKFISH_HELPER" --platform android --install-dir "$ENGINE_DIR" --config-path "$CONFIG_PATH"; then
+    STOCKFISH_READY=1
+  else
+    warn "The official Stockfish Android download or validation failed."
+  fi
+else
+  warn "Could not download Terchess's Stockfish installer helper."
+fi
+
+if [[ "$STOCKFISH_READY" -ne 1 ]]; then
+  warn "Trying the Termux package as a fallback; its version may be older than the official release."
+  if ! command -v stockfish >/dev/null 2>&1; then
+    pkg install -y stockfish || warn "The Termux Stockfish package could not be installed."
+  fi
+  if STOCKFISH_PATH="$(command -v stockfish 2>/dev/null)"; then
+    if [[ -f "$STOCKFISH_HELPER" ]] && "$PYTHON_BIN" "$STOCKFISH_HELPER" --validate-existing "$STOCKFISH_PATH" --config-path "$CONFIG_PATH"; then
+      warn "Using the Termux package fallback. Its version may be older than the latest official release."
+    else
+      warn "A system Stockfish was found but could not be validated or configured. Select a compatible executable in Terchess Settings."
+    fi
+  else
+    warn "No compatible Stockfish engine is available. Terchess still works for Hotseat, history, PGN, and opening lookup."
   fi
 fi
 

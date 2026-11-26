@@ -62,13 +62,16 @@ uciok
         with self.assertRaises(InstallerError):
             parse_uci_output(uci, 18)
         with self.assertRaises(InstallerError):
-            parse_uci_output("id name Stockfish 19\nuciok\n", 19)
+            parse_uci_output("id name Stockfish 19\\nuciok\\n", 19)
 
     def test_archive_paths_cannot_escape_extraction_directory(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            self.assertEqual(safe_destination(root, "stockfish/engine"), root / "stockfish" / "engine")
-            for name in ("../outside", "/etc/passwd", "stockfish/../../outside", "..\\outside", "C:/outside"):
+            self.assertEqual(
+                safe_destination(root, "stockfish/engine"),
+                (root / "stockfish" / "engine").resolve(),
+            )
+            for name in ("../outside", "/etc/passwd", "stockfish/../../outside", "..\\\\outside", "C:/outside"):
                 with self.subTest(name=name), self.assertRaises(InstallerError):
                     safe_destination(root, name)
 
@@ -88,7 +91,8 @@ uciok
             extract_archive(archive_path, output)
             engine = output / "stockfish" / "stockfish-linux-x86-64-universal"
             self.assertEqual(engine.read_bytes(), payload)
-            self.assertTrue(engine.stat().st_mode & 0o100)
+            if os.name != "nt":
+                self.assertTrue(engine.stat().st_mode & 0o100)
 
     def test_extract_windows_zip_archive(self):
         with tempfile.TemporaryDirectory() as temp:

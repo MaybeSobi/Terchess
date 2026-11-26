@@ -1,3 +1,8 @@
+param(
+    [ValidateSet("main", "release")]
+    [string]$Channel = "main"
+)
+
 $ErrorActionPreference = "Stop"
 $Repo = "MaybeSobi/Terchess"
 
@@ -110,16 +115,75 @@ try {
     Remove-Item -LiteralPath $helperTemp -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-Write-Info "Finding the latest stable release..."
-$release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" -Headers @{
-    "User-Agent" = "Terchess-Installer"
-    "Accept" = "application/vnd.github+json"
-}
-$asset = $release.assets | Where-Object { $_.name -match '^Terchess-.*\.zip$' } | Select-Object -First 1
-if (-not $asset) { throw "Could not find a Terchess ZIP in the latest GitHub release." }
-
 $temp = Join-Path $env:TEMP ("terchess-install-" + [guid]::NewGuid().ToString("N"))
-$zip = Join-Path $temp "Terchess.zip"
+$zipName = "Terchess-main.zip"
+$downloadUri = "https://codeload.github.com/$Repo/zip/refs/heads/main"
+
+if ($Channel -eq "release") {
+    Write-Info "Finding the latest stable release..."
+    $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" -Headers @{
+        "User-Agent" = "Terchess-Installer"
+        "Accept" = "application/vnd.github+json"
+    }
+    $asset = $release.assets | Where-Object { $_.name -match '^Terchess-.*\.zip
+$extract = Join-Path $temp "extract"
+$destination = Join-Path $env:LOCALAPPDATA "Programs\Terchess"
+New-Item -ItemType Directory -Force -Path $extract | Out-Null
+
+try {
+    Write-Info "Downloading Terchess from the $Channel channel..."
+    Invoke-WebRequest -UseBasicParsing -Uri $downloadUri -OutFile $zip
+    Expand-Archive -Path $zip -DestinationPath $extract -Force
+
+    $project = Get-ChildItem -Path $extract -Filter "pyproject.toml" -Recurse -File | Select-Object -First 1
+    if (-not $project) { throw "The downloaded archive does not contain pyproject.toml." }
+    $source = $project.Directory.FullName
+
+    if (Test-Path -LiteralPath $destination -PathType Container) {
+        # Keep the existing virtual environment; replace only application files.
+        Get-ChildItem -LiteralPath $destination -Force |
+            Where-Object { -not ($_.Name -eq ".venv" -and $_.PSIsContainer) } |
+            Remove-Item -Recurse -Force
+    } else {
+        if (Test-Path -LiteralPath $destination) {
+            Remove-Item -LiteralPath $destination -Force
+        }
+        New-Item -ItemType Directory -Force -Path $destination | Out-Null
+    }
+
+    Get-ChildItem -LiteralPath $source -Force |
+        Copy-Item -Destination $destination -Recurse -Force
+
+    # Check declared dependencies, then refresh only Terchess itself in the old venv.
+    $venvPython = Join-Path $destination ".venv\Scripts\python.exe"
+    if (Test-Path -LiteralPath $venvPython -PathType Leaf) {
+        Write-Info "Updating Terchess inside the existing Python environment..."
+        & $venvPython -m pip install --disable-pip-version-check $destination
+        if ($LASTEXITCODE -ne 0) {
+            throw "Could not update Python dependencies in the existing .venv. Check the connection and rerun the installer."
+        }
+
+        & $venvPython -m pip install --disable-pip-version-check --force-reinstall --no-deps $destination
+        if ($LASTEXITCODE -ne 0) {
+            throw "Could not refresh Terchess in the existing .venv. Rerun the installer to retry."
+        }
+    }
+} finally {
+    Remove-Item -LiteralPath $temp -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+Install-TerchessCommand -InstallDirectory $destination
+
+Write-Info "Installed to $destination"
+Write-Info "Launching Terchess. First launch installs its Python dependencies."
+& (Join-Path $destination "run_terchess.bat")
+ } | Select-Object -First 1
+    if (-not $asset) { throw "Could not find a Terchess ZIP in the latest GitHub release." }
+    $downloadUri = $asset.browser_download_url
+    $zipName = $asset.name
+}
+
+$zip = Join-Path $temp $zipName
 $extract = Join-Path $temp "extract"
 $destination = Join-Path $env:LOCALAPPDATA "Programs\Terchess"
 New-Item -ItemType Directory -Force -Path $extract | Out-Null

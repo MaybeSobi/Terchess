@@ -78,7 +78,7 @@ TERCHESS_COMMAND
 }
 
 if ! command -v brew >/dev/null 2>&1; then
-  echo "Homebrew is needed to install Python and Stockfish automatically on macOS."
+  echo "Homebrew is needed to install Python automatically on macOS."
   read -r -p "Install Homebrew now from its official installer? [y/N] " answer
   case "$answer" in
     y|Y|yes|YES)

@@ -127,7 +127,7 @@ def _live_terminal_size(console: Console) -> tuple[int, int]:
 def board_table(
     board: chess.Board,
     human_color: chess.Color,
-    cell_width: int = 3,
+    cell_width: int = 2,
     cell_height: int = 1,
 ) -> Table:
     """Build a responsive colored board oriented from the human player's side."""

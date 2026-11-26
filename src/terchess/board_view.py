@@ -18,14 +18,20 @@ from terchess.config import load_config
 LIGHT_SQUARE = "#F0D9B5"
 DARK_SQUARE = "#B58863"
 LAST_MOVE_SQUARE = "#E6E36A"
-WHITE_PIECE_SQUARE = "#765437"
-BLACK_PIECE_SQUARE = "#F0D9B5"
-
-# Two-row silhouettes fill more of a square than a single Unicode chess glyph.
-_PIECE_SPRITES: dict[int, tuple[str, str]] = {
+# White pieces use open silhouettes; black pieces use filled silhouettes.
+# Each shape is scaled to the active square dimensions during rendering.
+_WHITE_PIECE_SPRITES: dict[int, tuple[str, str]] = {
+    chess.PAWN: (" ◯ ", "░░░"),
+    chess.KNIGHT: ("╭╲ ", "░░░"),
+    chess.BISHOP: (" ◇ ", "░░░"),
+    chess.ROOK: ("┌─┐", "└─┘"),
+    chess.QUEEN: ("◇◆◇", "░░░"),
+    chess.KING: (" ✚ ", "░░░"),
+}
+_BLACK_PIECE_SPRITES: dict[int, tuple[str, str]] = {
     chess.PAWN: (" ● ", "███"),
     chess.KNIGHT: ("▛╲ ", "███"),
-    chess.BISHOP: (" ◈ ", "███"),
+    chess.BISHOP: (" ◆ ", "███"),
     chess.ROOK: ("▛█▜", "███"),
     chess.QUEEN: ("♦◆♦", "███"),
     chess.KING: (" ✚ ", "███"),
@@ -140,7 +146,8 @@ def _piece_cell_lines(piece: chess.Piece, cell_width: int, cell_height: int) -> 
         left = max(0, (cell_width - 1) // 2)
         return [(" " * left) + glyph + (" " * max(0, cell_width - left - 1))]
 
-    source = _PIECE_SPRITES[piece.piece_type]
+    sprites = _WHITE_PIECE_SPRITES if piece.color == chess.WHITE else _BLACK_PIECE_SPRITES
+    source = sprites[piece.piece_type]
     sprite_width = min(cell_width - 1, 9)
     lines: list[str] = []
     for row_index in range(cell_height):
@@ -156,11 +163,13 @@ def _piece_cell_lines(piece: chess.Piece, cell_width: int, cell_height: int) -> 
     return lines
 
 
-def _piece_colors(piece: chess.Piece) -> tuple[str, str]:
-    """Return a high-contrast foreground and square background for either side."""
+def _piece_colors(piece: chess.Piece, square_background: str) -> tuple[str, str]:
+    """Choose a contrasting piece color while preserving the checkerboard square."""
     if piece.color == chess.WHITE:
-        return "#FFFFFF", WHITE_PIECE_SQUARE
-    return "#171717", BLACK_PIECE_SQUARE
+        foreground = "#5A351D" if square_background in {LIGHT_SQUARE, LAST_MOVE_SQUARE} else "#FFFFFF"
+    else:
+        foreground = "#F4E6D0" if square_background == DARK_SQUARE else "#171717"
+    return foreground, square_background
 
 
 def _clear_rendered_screen(console: Console) -> None:
@@ -205,14 +214,14 @@ def board_table(
                 square = chess.square(file_index, rank)
                 piece = board.piece_at(square)
                 is_light = (file_index + rank) % 2 == 1
+                background = LAST_MOVE_SQUARE if square in last_squares else (LIGHT_SQUARE if is_light else DARK_SQUARE)
                 if piece:
-                    foreground, background = _piece_colors(piece)
+                    foreground, background = _piece_colors(piece, background)
                     style = f"bold {foreground} on {background}"
                     if square in last_squares:
                         style += " underline"
                     cell_text = _piece_cell_lines(piece, cell_width, cell_height)[row_index]
                 else:
-                    background = LAST_MOVE_SQUARE if square in last_squares else (LIGHT_SQUARE if is_light else DARK_SQUARE)
                     style = f"on {background}"
                     cell_text = " " * cell_width
                 cells.append(Text(cell_text, style=style))

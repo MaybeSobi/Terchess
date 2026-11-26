@@ -6,13 +6,13 @@ Most commands must be run from the extracted Terchess folder: the folder contain
 
 For example, if you extracted the ZIP into Downloads:
 
-- Windows PowerShell: `cd "$HOME\Downloads\Terchess-1.0.2"`
-- Kali/Linux: `cd ~/Projects/Terchess-1.0.2` (use the path where you extracted it)
-- macOS Terminal: `cd "$HOME/Downloads/Terchess-1.0.2"` (adjust for your chosen location)
+- Windows PowerShell: `cd "$HOME\Downloads\Terchess-1.1.6"`
+- Kali/Linux: `cd ~/Projects/Terchess-1.1.6` (use the path where you extracted it)
+- macOS Terminal: `cd "$HOME/Downloads/Terchess-1.1.6"` (adjust for your chosen location)
 
 If `pyproject.toml` is not in the current directory, use `cd` to enter the correct folder before creating the environment or installing the project.
 
-For full first-time setup—including downloading/extracting the ZIP, installing Python and Stockfish, and platform-specific commands—see the [Installation section in README.md](README.md#installation).
+For full first-time setup—including downloading/extracting the ZIP, installing Python and Stockfish, and platform-specific commands—see the [Installation section in README.md](../README.md#installation).
 
 ## `py` or `python3` is not recognized
 

@@ -29,7 +29,7 @@ Terchess brings the full chess experience into your terminal — including a way
 
 | Board View | Blindfold Mode |
 |:--:|:--:|
-| An adaptive-size, classically colored chessboard that grows to use the available terminal space, with native Unicode chess symbols, move highlights, clocks, and move history. | A text-only game: follow algebraic moves and keep the position in your head. |
+| An adaptive-size chessboard with native Unicode symbols, selectable color themes, move highlights, clocks, and move history. | A text-only game: follow algebraic moves and keep the position in your head. |
 
 Choose the way you want to think about chess. Switch display modes in the app.
 
@@ -46,7 +46,8 @@ Terchess uses the terminal's native Unicode chess characters (`♔ ♕ ♖ ♗ �
 - **Game history** — completed games are saved locally in SQLite.
 - **PGN tools** — import games, export a selected game or your collection, and replay moves.
 - **Offline opening recognition** — identify opening names and ECO codes as the game develops.
-- **Persistent settings** — save your preferred side, time control, display mode, skill level, and engine path.
+- **Board color themes** — choose Classic Wood, Green, Blue, Pink, or Purple from Settings; your choice is saved across sessions.
+- **Persistent settings** — save your preferred side, time control, display mode, board size and colors, skill level, and engine path.
 - **Cross-platform terminal UI** — including a compact, portrait-friendly layout for Android via Termux.
 - **Offline after setup** — gameplay and opening recognition do not require a network connection.
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import os
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
@@ -224,7 +225,13 @@ def _settings_from_config(config: dict[str, object]) -> GameSettings:
     )
 
 
-def settings_menu(settings: GameSettings, stockfish_path: str | None) -> None:
+def settings_menu(
+    settings: GameSettings,
+    stockfish_path: str | None,
+    stockfish_engines: list[dict[str, str]] | None = None,
+    remember_engine_choice: bool = True,
+    deferred_version: str | None = None,
+) -> None:
     while True:
         console.print()
         show_settings(settings)
@@ -238,16 +245,19 @@ def settings_menu(settings: GameSettings, stockfish_path: str | None) -> None:
         choice = Prompt.ask("Select setting", choices=["1", "2", "3", "4"], default="4")
         if choice == "1":
             settings.skill_level = _ask_skill_level(settings.skill_level)
-            _save_preferences(settings, stockfish_path)
         elif choice == "2":
             settings.human_color = _ask_color(settings.human_color)
-            _save_preferences(settings, stockfish_path)
         elif choice == "3":
             settings.time_control_key = _ask_time_control(settings.time_control_key)
-            _save_preferences(settings, stockfish_path)
         else:
             return
-
+        _save_preferences(
+            settings,
+            stockfish_path,
+            stockfish_engines,
+            remember_engine_choice,
+            deferred_version,
+        )
 
 def _ask_engine_path() -> str | None:
     console.print(
@@ -420,17 +430,21 @@ def main() -> None:
                 try:
                     save_config(_settings_config(
                         settings,
-                        persistent_engine_path if remember else (
-                            persistent_engine_path
-                        ),
+                        persistent_engine_path,
                         engine_catalog,
                         remember_engine_choice,
                         deferred_version if isinstance(deferred_version, str) else None,
                     ))
                 except OSError as exc:
                     console.print(f"[yellow]Warning: could not save engine choice: {exc}[/yellow]")
-        elif not preferred_engine_path and len(engine_catalog) == 1:
+        elif len(engine_catalog) == 1 and (
+            not preferred_engine_path
+            or os.path.normcase(os.path.abspath(preferred_engine_path))
+            != os.path.normcase(os.path.abspath(engine_catalog[0]["path"]))
+        ):
             preferred_engine_path = engine_catalog[0]["path"]
+            if remember_engine_choice:
+                persistent_engine_path = preferred_engine_path
 
         while True:
             console.print()
@@ -486,7 +500,11 @@ def main() -> None:
                 mode_name = "Board view" if settings.show_board else "Blindfold / text-only"
                 console.print(f"[green]Display mode set to: {mode_name}[/green]")
             elif choice == "3":
-                settings_menu(settings, persistent_engine_path)
+                settings_menu(
+                    settings, persistent_engine_path, engine_catalog,
+                    remember_engine_choice,
+                    deferred_version if isinstance(deferred_version, str) else None,
+                )
             elif choice == "4":
                 console.print(Panel(
                     f"Terchess {__version__}\n\n"

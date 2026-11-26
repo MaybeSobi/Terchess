@@ -332,7 +332,7 @@ def render_position(
         if opening_name:
             console.print(Text(f"Opening: {opening_name}", style="cyan"))
         if notice:
-            console.print(Text(f"Status: {notice}", style="yellow"))
+            console.print(f"[bold yellow]Status:[/bold yellow] {notice}")
         console.print(Text("SAN/UCI move · help · moves · resign · menu", style="dim"))
 
 

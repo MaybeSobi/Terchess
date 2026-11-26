@@ -1,6 +1,6 @@
 <div align="center">
 
-# ♟️ Terchess
+<img src="assets/terchess-logo-lockup.png" alt="Terchess logo" width="260">
 
 ### Terminal + Chess
 

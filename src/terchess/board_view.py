@@ -18,6 +18,18 @@ from terchess.config import load_config
 LIGHT_SQUARE = "#F0D9B5"
 DARK_SQUARE = "#B58863"
 LAST_MOVE_SQUARE = "#E6E36A"
+WHITE_PIECE_SQUARE = "#765437"
+BLACK_PIECE_SQUARE = "#F0D9B5"
+
+# Two-row silhouettes fill more of a square than a single Unicode chess glyph.
+_PIECE_SPRITES: dict[int, tuple[str, str]] = {
+    chess.PAWN: (" ● ", "███"),
+    chess.KNIGHT: ("▛╲ ", "███"),
+    chess.BISHOP: (" ◈ ", "███"),
+    chess.ROOK: ("▛█▜", "███"),
+    chess.QUEEN: ("♦◆♦", "███"),
+    chess.KING: (" ✚ ", "███"),
+}
 
 
 def is_termux() -> bool:
@@ -91,26 +103,23 @@ def _board_cell_dimensions(
     if wide_layout is None:
         wide_layout = terminal_width >= 110 and terminal_height >= 32
 
-    board_width = max(16, terminal_width - (50 if wide_layout else 6))
-    max_cell_width = max(2, board_width // 8)
-    max_cell_height = max(1, (terminal_height - (6 if wide_layout else 10)) // 8)
-    max_cell_height = min(3, max_cell_height)
+    board_width = max(32, terminal_width - (50 if wide_layout else 6))
+    max_cell_width = max(4, board_width // 8)
+    max_cell_height = min(4, max(1, (terminal_height - 8) // 8))
 
     presets = {
-        "compact": (2, 1),
-        "normal": (4, 2),
-        "large": (6, 3),
+        "compact": (4, 2),
+        "normal": (6, 3),
+        "large": (8, 4),
     }
     if board_scale == "auto":
         cell_height = max_cell_height
-        cell_width = min(max_cell_width, cell_height * 2, 6)
-        cell_height = max(1, min(cell_height, cell_width // 2))
+        cell_width = min(max_cell_width, cell_height * 2, 8)
         return cell_width, cell_height
 
     target_width, target_height = presets.get(board_scale, presets["compact"])
     cell_height = min(target_height, max_cell_height)
     cell_width = min(target_width, max_cell_width, cell_height * 2)
-    cell_height = max(1, min(cell_height, cell_width // 2))
     return cell_width, cell_height
 
 
@@ -122,6 +131,47 @@ def _live_terminal_size(console: Console) -> tuple[int, int]:
     except (AttributeError, OSError, ValueError):
         size = shutil.get_terminal_size(fallback=(console.width, console.height))
         return max(1, size.columns), max(1, size.lines)
+
+
+def _piece_cell_lines(piece: chess.Piece, cell_width: int, cell_height: int) -> list[str]:
+    """Return a centered, scaled piece silhouette; use proper color glyphs in tiny cells."""
+    if cell_width < 4 or cell_height < 2:
+        glyph = piece.unicode_symbol()
+        left = max(0, (cell_width - 1) // 2)
+        return [(" " * left) + glyph + (" " * max(0, cell_width - left - 1))]
+
+    source = _PIECE_SPRITES[piece.piece_type]
+    sprite_width = min(cell_width - 1, 9)
+    lines: list[str] = []
+    for row_index in range(cell_height):
+        source_y = min(1, (row_index * 2) // cell_height)
+        source_row = source[source_y]
+        sprite_row = "".join(
+            source_row[min(2, (column * 3) // sprite_width)]
+            for column in range(sprite_width)
+        )
+        left = (cell_width - sprite_width) // 2
+        right = cell_width - sprite_width - left
+        lines.append((" " * left) + sprite_row + (" " * right))
+    return lines
+
+
+def _piece_colors(piece: chess.Piece) -> tuple[str, str]:
+    """Return a high-contrast foreground and square background for either side."""
+    if piece.color == chess.WHITE:
+        return "#FFFFFF", WHITE_PIECE_SQUARE
+    return "#171717", BLACK_PIECE_SQUARE
+
+
+def _clear_rendered_screen(console: Console) -> None:
+    """Clear the active terminal viewport and place the cursor at its top-left."""
+    if console.is_terminal:
+        # Write the viewport clear explicitly, even when Rich suppresses control
+        # codes due to the host terminal's TERM/dumb-terminal detection.
+        console.file.write("\x1b[2J\x1b[H")
+        console.file.flush()
+    else:
+        console.clear(home=True)
 
 
 def board_table(
@@ -155,29 +205,16 @@ def board_table(
                 square = chess.square(file_index, rank)
                 piece = board.piece_at(square)
                 is_light = (file_index + rank) % 2 == 1
-                background = LAST_MOVE_SQUARE if square in last_squares else (LIGHT_SQUARE if is_light else DARK_SQUARE)
-
-                glyphs = {
-                    chess.PAWN: "♟",
-                    chess.KNIGHT: "♞",
-                    chess.BISHOP: "♝",
-                    chess.ROOK: "♜",
-                    chess.QUEEN: "♛",
-                    chess.KING: "♚",
-                }
-                glyph = glyphs[piece.piece_type] if piece else "·"
-                if row_index == middle_row:
-                    left = (cell_width - 1) // 2
-                    right = cell_width - left - 1
-                    cell_text = (" " * left) + glyph + (" " * right)
-                else:
-                    cell_text = " " * cell_width
-
-                if piece and row_index == middle_row:
-                    foreground = "#FFFFFF" if piece.color == chess.WHITE else "#171717"
+                if piece:
+                    foreground, background = _piece_colors(piece)
                     style = f"bold {foreground} on {background}"
+                    if square in last_squares:
+                        style += " underline"
+                    cell_text = _piece_cell_lines(piece, cell_width, cell_height)[row_index]
                 else:
+                    background = LAST_MOVE_SQUARE if square in last_squares else (LIGHT_SQUARE if is_light else DARK_SQUARE)
                     style = f"on {background}"
+                    cell_text = " " * cell_width
                 cells.append(Text(cell_text, style=style))
             table.add_row(*cells)
 
@@ -247,7 +284,7 @@ def render_position(
 ) -> None:
     """Clear and render the board plus a live-clock snapshot and move history."""
     if is_termux():
-        console.clear()
+        _clear_rendered_screen(console)
         _render_termux_position(
             console, board, human_color, skill_level, clock, time_control_name,
             notice, opening_name, game_label,
@@ -259,7 +296,7 @@ def render_position(
     # Console preserves recording, output streams, and terminal capabilities.
     console._width = terminal_width
     console._height = terminal_height
-    console.clear()
+    _clear_rendered_screen(console)
     side_name = color_name(human_color)
     turn_name = f"{color_name(board.turn)} to move"
     header = Text(
@@ -348,7 +385,7 @@ def render_text_position(
     game_label: str | None = None,
 ) -> None:
     """Render a blindfold/text-only game screen without a chessboard diagram."""
-    console.clear()
+    _clear_rendered_screen(console)
     if is_termux():
         mode = game_label or f"You: {color_name(human_color)} · Stockfish: {color_name(not human_color)}"
         console.print(Text(f"TERCHESS · BLINDFOLD · {mode} · {time_control_name}", style="bold bright_green"))

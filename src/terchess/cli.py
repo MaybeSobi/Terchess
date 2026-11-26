@@ -16,6 +16,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.table import Table
+from rich.text import Text
 
 from terchess import __version__
 from terchess.board_view import BOARD_THEMES, board_table, move_history

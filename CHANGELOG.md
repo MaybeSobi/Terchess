@@ -8,21 +8,17 @@ All notable changes to Terchess are documented here.
 - Let the desktop two-column layout and board panel expand across the available terminal width, while keeping the information sidebar readable.
 - Render larger chess squares across multiple terminal rows on spacious screens and automatically reduce their size on short terminals.
 - Preserve the compact portrait-first Termux board.
-- Update one-command installers to resolve the latest stable official Stockfish release automatically, with release-specific SHA-256 and UCI version validation.
-
-## [Unreleased]
-
 - Add a compact portrait-first Termux game screen with a borderless board, inline clocks, and a short recent-move list.
-- Disable the live prompt toolbar refresh in Termux to prevent prompt-toolkit redraws from interfering with board repainting; desktop rendering remains unchanged.
-
+- Disable the live prompt toolbar refresh in Termux to prevent prompt-toolkit redraws from interfering with board repainting.
 - Register a user-level `terchess` terminal command from one-command installers on Windows, Linux, and macOS.
 - Persist the command location in the user's PATH and forward CLI arguments through the platform launchers.
 - Refresh the README's quick-install guidance, current feature list, and roadmap descriptions.
+- Improve Windows Stockfish discovery and reuse, including manually installed executables, and validate the Skill Level 0–20 option before saving its path.
+- Preserve existing valid user preferences while updating the Stockfish path; leave malformed settings files untouched.
+- Preserve an existing `.venv` during repeat installs on Windows, Linux, and macOS.
+- Update one-command installers to resolve the latest stable official Stockfish release automatically, with release-specific SHA-256 and UCI version validation.
 
-- Fix the Windows installer so it detects and reuses existing Stockfish executables (including manual builds under `C:\\Engines`) before attempting a WinGet installation.
-- Save a detected Stockfish executable path only after verifying that its UCI options support Terchess Skill Level 0–20.
-- Merge the detected engine path into valid JSON settings without overwriting other preferences; leave corrupt or non-object settings files untouched.
-- Preserve an existing `.venv` during repeat installs on Windows, Linux, and macOS; refresh the application package and declared dependencies in place.
+## [Unreleased]
 
 ## [1.1.0] — 2026-11-01
 

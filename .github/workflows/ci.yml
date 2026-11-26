@@ -12,7 +12,8 @@ permissions:
 # A newer commit on the same branch supersedes older CI runs.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Keep every main-branch run; supersede older runs only on temporary branches.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   tests:

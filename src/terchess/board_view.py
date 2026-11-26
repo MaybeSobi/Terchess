@@ -7,6 +7,7 @@ import shutil
 
 import chess
 from rich.align import Align
+from rich.cells import cell_len
 from rich.console import Console, Group
 from rich.panel import Panel
 from rich.table import Table
@@ -18,24 +19,6 @@ from terchess.config import load_config
 LIGHT_SQUARE = "#F0D9B5"
 DARK_SQUARE = "#B58863"
 LAST_MOVE_SQUARE = "#E6E36A"
-# White pieces use open silhouettes; black pieces use filled silhouettes.
-# Each shape is scaled to the active square dimensions during rendering.
-_WHITE_PIECE_SPRITES: dict[int, tuple[str, str]] = {
-    chess.PAWN: (" ◯ ", "░░░"),
-    chess.KNIGHT: ("╭╲ ", "░░░"),
-    chess.BISHOP: (" ◇ ", "░░░"),
-    chess.ROOK: ("┌─┐", "└─┘"),
-    chess.QUEEN: ("◇◆◇", "░░░"),
-    chess.KING: (" ✚ ", "░░░"),
-}
-_BLACK_PIECE_SPRITES: dict[int, tuple[str, str]] = {
-    chess.PAWN: (" ● ", "███"),
-    chess.KNIGHT: ("▛╲ ", "███"),
-    chess.BISHOP: (" ◆ ", "███"),
-    chess.ROOK: ("▛█▜", "███"),
-    chess.QUEEN: ("♦◆♦", "███"),
-    chess.KING: (" ✚ ", "███"),
-}
 
 
 def is_termux() -> bool:
@@ -140,26 +123,22 @@ def _live_terminal_size(console: Console) -> tuple[int, int]:
 
 
 def _piece_cell_lines(piece: chess.Piece, cell_width: int, cell_height: int) -> list[str]:
-    """Return a centered, scaled piece silhouette; use proper color glyphs in tiny cells."""
-    if cell_width < 4 or cell_height < 2:
-        glyph = piece.unicode_symbol()
-        left = max(0, (cell_width - 1) // 2)
-        return [(" " * left) + glyph + (" " * max(0, cell_width - left - 1))]
+    """Center the actual Unicode chess symbol in a terminal square.
 
-    sprites = _WHITE_PIECE_SPRITES if piece.color == chess.WHITE else _BLACK_PIECE_SPRITES
-    source = sprites[piece.piece_type]
-    sprite_width = min(cell_width - 1, 9)
-    lines: list[str] = []
-    for row_index in range(cell_height):
-        source_y = min(1, (row_index * 2) // cell_height)
-        source_row = source[source_y]
-        sprite_row = "".join(
-            source_row[min(2, (column * 3) // sprite_width)]
-            for column in range(sprite_width)
-        )
-        left = (cell_width - sprite_width) // 2
-        right = cell_width - sprite_width - left
-        lines.append((" " * left) + sprite_row + (" " * right))
+    Terminal fonts cannot scale a text glyph like an image. Keep the proper
+    chess symbols at every board size rather than drawing unreliable ASCII art.
+    """
+    cell_width = max(1, int(cell_width))
+    cell_height = max(1, int(cell_height))
+    glyph = piece.unicode_symbol()
+    glyph_width = cell_len(glyph)
+    if glyph_width > cell_width:
+        return [glyph if row == cell_height // 2 else "" for row in range(cell_height)]
+
+    left = (cell_width - glyph_width) // 2
+    right = cell_width - glyph_width - left
+    lines = [" " * cell_width for _ in range(cell_height)]
+    lines[cell_height // 2] = (" " * left) + glyph + (" " * right)
     return lines
 
 
@@ -168,18 +147,17 @@ def _piece_colors(piece: chess.Piece, square_background: str) -> tuple[str, str]
     if piece.color == chess.WHITE:
         foreground = "#5A351D" if square_background in {LIGHT_SQUARE, LAST_MOVE_SQUARE} else "#FFFFFF"
     else:
-        foreground = "#F4E6D0" if square_background == DARK_SQUARE else "#171717"
+        foreground = "#171717" if square_background in {LIGHT_SQUARE, LAST_MOVE_SQUARE} else "#F4E6D0"
     return foreground, square_background
 
 
 def _clear_rendered_screen(console: Console) -> None:
-    """Clear the active terminal viewport and place the cursor at its top-left."""
-    if console.is_terminal:
-        # Write the viewport clear explicitly, even when Rich suppresses control
-        # codes due to the host terminal's TERM/dumb-terminal detection.
-        console.file.write("\x1b[2J\x1b[H")
-        console.file.flush()
-    else:
+    """Clear the visible terminal viewport even if Rich's TTY detection is wrong."""
+    output = console.file
+    try:
+        output.write("\x1b[2J\x1b[H")
+        output.flush()
+    except (AttributeError, OSError, ValueError):
         console.clear(home=True)
 
 

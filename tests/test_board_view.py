@@ -76,72 +76,34 @@ def test_wide_layout_uses_the_available_terminal_width() -> None:
     rendered_lines = console.export_text().splitlines()
     assert max(map(len, rendered_lines)) >= 110
 
-def test_piece_fallback_uses_correct_white_and_black_unicode_symbols() -> None:
+def test_piece_symbols_are_centered_at_every_board_size() -> None:
     from terchess.board_view import _piece_cell_lines
 
-    white_pawn = _piece_cell_lines(chess.Piece(chess.PAWN, chess.WHITE), 2, 1)
-    black_pawn = _piece_cell_lines(chess.Piece(chess.PAWN, chess.BLACK), 2, 1)
-
-    assert white_pawn == ["♙ "]
-    assert black_pawn == ["♟ "]
-
-
-def test_large_piece_silhouettes_are_distinct_and_fill_the_cell() -> None:
-    from terchess.board_view import _piece_cell_lines
-
-    silhouettes = [
-        tuple(_piece_cell_lines(chess.Piece(piece_type, color), 7, 4))
-        for color in (chess.WHITE, chess.BLACK)
+    for color in (chess.WHITE, chess.BLACK):
         for piece_type in (
             chess.PAWN, chess.KNIGHT, chess.BISHOP,
             chess.ROOK, chess.QUEEN, chess.KING,
-        )
-    ]
+        ):
+            piece = chess.Piece(piece_type, color)
+            for width, height in ((2, 1), (4, 2), (6, 3), (8, 4)):
+                lines = _piece_cell_lines(piece, width, height)
+                assert len(lines) == height
+                assert lines[height // 2].strip() == piece.unicode_symbol()
+                assert all(
+                    line == " " * width
+                    for row, line in enumerate(lines)
+                    if row != height // 2
+                )
 
-    assert len(set(silhouettes)) == 12
-    assert all(len(lines) == 4 for lines in silhouettes)
-    assert all(len(line) == 7 for lines in silhouettes for line in lines)
 
-
-def test_white_and_black_pieces_have_contrasting_colors_without_changing_square_colors() -> None:
+def test_white_and_black_piece_colors_preserve_each_square_background() -> None:
     from terchess.board_view import LIGHT_SQUARE, DARK_SQUARE, _piece_colors
 
-    white = chess.Piece(chess.QUEEN, chess.WHITE)
-    black = chess.Piece(chess.QUEEN, chess.BLACK)
-
-    white_on_light = _piece_colors(white, LIGHT_SQUARE)
-    black_on_light = _piece_colors(black, LIGHT_SQUARE)
-    white_on_dark = _piece_colors(white, DARK_SQUARE)
-    black_on_dark = _piece_colors(black, DARK_SQUARE)
-
-    assert white_on_light[0] != black_on_light[0]
-    assert white_on_dark[0] != black_on_dark[0]
-    assert white_on_light[1] == black_on_light[1] == LIGHT_SQUARE
-    assert white_on_dark[1] == black_on_dark[1] == DARK_SQUARE
-
-
-def test_white_and_black_pawns_use_different_silhouette_styles() -> None:
-    from terchess.board_view import _piece_cell_lines
-
-    white_pawn = tuple(_piece_cell_lines(chess.Piece(chess.PAWN, chess.WHITE), 7, 4))
-    black_pawn = tuple(_piece_cell_lines(chess.Piece(chess.PAWN, chess.BLACK), 7, 4))
-
-    assert white_pawn != black_pawn
-
-
-
-
-def test_piece_art_itself_scales_with_compact_normal_and_large_modes() -> None:
-    from terchess.board_view import _piece_cell_lines
-
-    piece = chess.Piece(chess.QUEEN, chess.WHITE)
-    compact = _piece_cell_lines(piece, 4, 2)
-    normal = _piece_cell_lines(piece, 6, 3)
-    large = _piece_cell_lines(piece, 8, 4)
-
-    assert (len(compact), len(compact[0].strip())) == (2, 3)
-    assert (len(normal), len(normal[0].strip())) == (3, 5)
-    assert (len(large), len(large[0].strip())) == (4, 7)
+    for background in (LIGHT_SQUARE, DARK_SQUARE):
+        white = _piece_colors(chess.Piece(chess.QUEEN, chess.WHITE), background)
+        black = _piece_colors(chess.Piece(chess.QUEEN, chess.BLACK), background)
+        assert white[0] != black[0]
+        assert white[1] == black[1] == background
 
 
 def test_terminal_redraw_explicitly_clears_and_homes_the_viewport() -> None:
@@ -168,7 +130,7 @@ def test_each_position_render_starts_with_a_fresh_terminal_viewport() -> None:
             return True
 
     output = TTYBuffer()
-    console = Console(file=output, force_terminal=True, width=100, height=30)
+    console = Console(file=output, force_terminal=False, width=100, height=30)
     for _ in range(2):
         render_position(
             console, chess.Board(), chess.WHITE, 10,

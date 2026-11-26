@@ -46,7 +46,7 @@ Choose the way you want to think about chess. Switch display modes in the app.
 - **Cross-platform terminal UI** — including a compact, portrait-friendly layout for Android via Termux.
 - **Offline after setup** — gameplay and opening recognition do not require a network connection.
 
-Stockfish is optional for Hotseat, game history, PGN tools, and opening lookup. The engine is distributed separately; Terchess does not bundle it in the app archive. One-command installers automatically install the official Stockfish 19 build for your platform and verify its SHA-256 checksum and UCI version.
+Stockfish is optional for Hotseat, game history, PGN tools, and opening lookup. The engine is distributed separately; Terchess does not bundle it in the app archive. One-command installers automatically find the latest stable official Stockfish release, install the matching build for your platform, and verify its SHA-256 checksum and reported UCI version.
 
 ## Installation
 
@@ -81,7 +81,7 @@ terchess
 terchess --version
 ```
 
-> **Engine:** One-command installers fetch the official Stockfish 19 release, verify its SHA-256 digest, and configure it automatically. Manual ZIP installs still require a separate Stockfish 19 download.\n>\n> **Security:** These commands download and execute an installer from this repository. You can inspect the scripts in the repository before running them. Use the dedicated Termux installer on Android; do not use the standard Linux installer inside Termux.
+> **Engine:** One-command installers fetch the latest stable official Stockfish release, verify its SHA-256 digest and reported version, and configure it automatically. Manual ZIP installs still require a separate Stockfish download.\n>\n> **Security:** These commands download and execute an installer from this repository. You can inspect the scripts in the repository before running them. Use the dedicated Termux installer on Android; do not use the standard Linux installer inside Termux.
 
 ### Manual installation
 
@@ -102,7 +102,7 @@ See **[INSTALL.md](INSTALL.md)** for complete platform-specific instructions, St
 ## Quick start
 
 1. Install Terchess using the command for your platform.
-2. The one-command installer configures Stockfish 19 automatically; manual ZIP installs require you to install the engine separately.
+2. The one-command installer configures the latest stable Stockfish automatically; manual ZIP installs require you to install the engine separately.
 3. Run `terchess`.
 4. Choose **Play vs Stockfish**, **Hotseat**, or **Game History**.
 5. Switch between Board View and Blindfold mode from the main menu.
@@ -129,7 +129,7 @@ Useful in-game commands:
 
 - **Python:** 3.10+
 - **Platforms:** Windows, macOS, Linux, Android via Termux
-- **Engine:** Official Stockfish 19 (optional; installed by one-command installers)
+- **Engine:** Official Stockfish (latest stable release; optional and installed by one-command installers)
 - **Storage:** Local SQLite database and per-user settings
 - **License:** GPL-3.0-or-later
 

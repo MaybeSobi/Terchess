@@ -110,7 +110,7 @@ if ! command -v python3 >/dev/null 2>&1 || ! python3 -c 'import sys; raise Syste
   exit 1
 fi
 
-info "Installing the official, checksum-verified Stockfish 19 build..."
+info "Checking and installing the latest stable official Stockfish build..."
 curl -fsSL "https://raw.githubusercontent.com/MaybeSobi/Terchess/main/scripts/install_stockfish.py" -o "$TMP_DIR/install_stockfish.py"
 python3 "$TMP_DIR/install_stockfish.py"
 

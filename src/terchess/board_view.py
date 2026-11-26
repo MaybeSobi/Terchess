@@ -85,40 +85,43 @@ def _board_cell_dimensions(
     wide_layout: bool | None = None,
     board_scale: str = "compact",
 ) -> tuple[int, int]:
-    """Return board cell dimensions for the selected size and live terminal area.
-
-    Compact cells keep piece glyphs visually prominent. Larger presets add
-    square padding/height; the terminal itself controls the actual font size.
-    """
+    """Return proportional square dimensions that fit the live terminal."""
+    terminal_width = max(1, int(terminal_width))
+    terminal_height = max(1, int(terminal_height))
     if wide_layout is None:
-        wide_layout = terminal_width >= 100
+        wide_layout = terminal_width >= 110 and terminal_height >= 32
 
-    available_width = max(24, terminal_width - (54 if wide_layout else 12))
-    available_rank_height = max(1, (terminal_height - (12 if wide_layout else 18)) // 8)
-    if board_scale == "auto":
-        cell_height = min(3, max(1, (terminal_height - 18) // 8))
-        cell_width = min(7, max(3, available_width // 16), cell_height * 3)
-        return cell_width, cell_height
+    board_width = max(16, terminal_width - (50 if wide_layout else 6))
+    max_cell_width = max(2, board_width // 8)
+    max_cell_height = max(1, (terminal_height - (6 if wide_layout else 10)) // 8)
+    max_cell_height = min(3, max_cell_height)
 
     presets = {
-        "compact": (3, 1),
+        "compact": (2, 1),
         "normal": (4, 2),
         "large": (6, 3),
     }
+    if board_scale == "auto":
+        cell_height = max_cell_height
+        cell_width = min(max_cell_width, cell_height * 2, 6)
+        cell_height = max(1, min(cell_height, cell_width // 2))
+        return cell_width, cell_height
+
     target_width, target_height = presets.get(board_scale, presets["compact"])
-    cell_width = min(target_width, max(3, available_width // 8))
-    cell_height = min(target_height, available_rank_height)
+    cell_height = min(target_height, max_cell_height)
+    cell_width = min(target_width, max_cell_width, cell_height * 2)
+    cell_height = max(1, min(cell_height, cell_width // 2))
     return cell_width, cell_height
 
 
 def _live_terminal_size(console: Console) -> tuple[int, int]:
-    """Read the current terminal dimensions instead of relying on startup size."""
+    """Read the actual current terminal dimensions without inflating small windows."""
     try:
         size = os.get_terminal_size(console.file.fileno())
-        return max(40, size.columns), max(12, size.lines)
+        return max(1, size.columns), max(1, size.lines)
     except (AttributeError, OSError, ValueError):
         size = shutil.get_terminal_size(fallback=(console.width, console.height))
-        return max(40, size.columns), max(12, size.lines)
+        return max(1, size.columns), max(1, size.lines)
 
 
 def board_table(
@@ -128,7 +131,7 @@ def board_table(
     cell_height: int = 1,
 ) -> Table:
     """Build a responsive colored board oriented from the human player's side."""
-    cell_width = max(3, int(cell_width))
+    cell_width = max(2, int(cell_width))
     cell_height = max(1, int(cell_height))
     middle_row = cell_height // 2
     table = Table.grid(padding=(0, 0), collapse_padding=True)
@@ -154,7 +157,15 @@ def board_table(
                 is_light = (file_index + rank) % 2 == 1
                 background = LAST_MOVE_SQUARE if square in last_squares else (LIGHT_SQUARE if is_light else DARK_SQUARE)
 
-                glyph = piece.unicode_symbol() if piece else "·"
+                glyphs = {
+                    chess.PAWN: "♟",
+                    chess.KNIGHT: "♞",
+                    chess.BISHOP: "♝",
+                    chess.ROOK: "♜",
+                    chess.QUEEN: "♛",
+                    chess.KING: "♚",
+                }
+                glyph = glyphs[piece.piece_type] if piece else "·"
                 if row_index == middle_row:
                     left = (cell_width - 1) // 2
                     right = cell_width - left - 1
@@ -255,7 +266,10 @@ def render_position(
         f"TERCHESS  |  {side_name}  |  {f'Skill {skill_level}/20' if skill_level is not None else (game_label or 'Local game')}  |  {time_control_name}",
         style="bold bright_white",
     )
-    wide_layout = terminal_width >= 100
+    # The full side-by-side dashboard needs both width and height. Shorter
+    # windows use a compact one-column view so panels cannot spill below the
+    # terminal and leave fragments behind.
+    wide_layout = terminal_width >= 110 and terminal_height >= 32
     board_scale = str(load_config().get("board_scale", "compact"))
     cell_width, cell_height = _board_cell_dimensions(
         terminal_width, terminal_height, wide_layout=wide_layout,
@@ -303,9 +317,23 @@ def render_position(
         console.print(layout)
     else:
         console.print(board_panel)
-        console.print(clock_panel)
-        console.print(history_panel)
-        console.print(info)
+        compact_clocks = Text()
+        for index, color in enumerate((chess.WHITE, chess.BLACK)):
+            if index:
+                compact_clocks.append("    ")
+            active = clock.running_color == color
+            prefix = "▶ " if active else ""
+            compact_clocks.append(
+                f"{prefix}{color_name(color)} {format_clock(clock.remaining(color))}",
+                style="bold bright_green" if active else "bold bright_white",
+            )
+        console.print(compact_clocks)
+        console.print(Text(f"Moves: {_compact_history(board, max_plies=8)}", style="bright_cyan"))
+        if opening_name:
+            console.print(Text(f"Opening: {opening_name}", style="cyan"))
+        if notice:
+            console.print(Text(f"Status: {notice}", style="yellow"))
+        console.print(Text("SAN/UCI move · help · moves · resign · menu", style="dim"))
 
 
 def render_text_position(

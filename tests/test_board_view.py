@@ -98,14 +98,30 @@ def test_large_piece_silhouettes_are_distinct_and_fill_the_cell() -> None:
     assert all(len(line) == 7 for lines in silhouettes for line in lines)
 
 
-def test_white_and_black_pieces_have_contrasting_colors_and_backgrounds() -> None:
-    from terchess.board_view import _piece_colors
+def test_white_and_black_pieces_have_contrasting_colors_without_changing_square_colors() -> None:
+    from terchess.board_view import LIGHT_SQUARE, DARK_SQUARE, _piece_colors
 
-    white_colors = _piece_colors(chess.Piece(chess.QUEEN, chess.WHITE))
-    black_colors = _piece_colors(chess.Piece(chess.QUEEN, chess.BLACK))
+    white = chess.Piece(chess.QUEEN, chess.WHITE)
+    black = chess.Piece(chess.QUEEN, chess.BLACK)
 
-    assert white_colors[0] != black_colors[0]
-    assert white_colors[1] != black_colors[1]
+    white_on_light = _piece_colors(white, LIGHT_SQUARE)
+    black_on_light = _piece_colors(black, LIGHT_SQUARE)
+    white_on_dark = _piece_colors(white, DARK_SQUARE)
+    black_on_dark = _piece_colors(black, DARK_SQUARE)
+
+    assert white_on_light[0] != black_on_light[0]
+    assert white_on_dark[0] != black_on_dark[0]
+    assert white_on_light[1] == black_on_light[1] == LIGHT_SQUARE
+    assert white_on_dark[1] == black_on_dark[1] == DARK_SQUARE
+
+
+def test_white_and_black_pawns_use_different_silhouette_styles() -> None:
+    from terchess.board_view import _piece_cell_lines
+
+    white_pawn = tuple(_piece_cell_lines(chess.Piece(chess.PAWN, chess.WHITE), 7, 4))
+    black_pawn = tuple(_piece_cell_lines(chess.Piece(chess.PAWN, chess.BLACK), 7, 4))
+
+    assert white_pawn != black_pawn
 
 
 def test_terminal_redraw_explicitly_clears_and_homes_the_viewport() -> None:

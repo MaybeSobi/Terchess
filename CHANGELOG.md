@@ -2,6 +2,16 @@
 
 All notable changes to Terchess are documented here.
 
+## [1.1.6] — 2026-11-26
+
+- Search for an existing compatible Stockfish before downloading a new engine, including the saved path, PATH, common system folders, Downloads, and common manual-install locations.
+- Detect installed Stockfish versions through UCI and verify the Skill Level 0–20 range before registering an engine.
+- When an older version is found, offer to switch Terchess to the latest release, install the latest alongside existing copies, or defer the update.
+- Preserve manually installed executables outside Terchess's managed engine directory.
+- Add a startup engine selector when multiple engines are retained, with a **Remember my choice** option.
+- Add `terchess --choose-engine` to reopen the selector after a choice has been remembered.
+- Preserve engine catalogs and selection preferences while saving other settings.
+
 ## [1.1.5] — 2026-11-26
 
 - Make the regular chessboard responsive to terminal width and height instead of locking every square to three characters.

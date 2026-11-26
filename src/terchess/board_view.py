@@ -34,13 +34,13 @@ BOARD_THEMES: dict[str, dict[str, str]] = {
     },
     "green": {
         "label": "White & Green",
-        "light": "#7D967E",
+        "light": "#778F78",
         "dark": "#526F59",
         "last_move": "#89764E",
     },
     "blue": {
         "label": "White & Blue",
-        "light": "#7A93AD",
+        "light": "#758EAA",
         "dark": "#4C6680",
         "last_move": "#817052",
     },

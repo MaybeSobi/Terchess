@@ -65,7 +65,7 @@ Terchess is a **Python terminal application**, not a standalone Windows `.exe`. 
 
 ### 1. Download and extract the ZIP
 
-Download **[Terchess-1.1.5.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.1.0/Terchess-1.1.5.zip)** from the [stable v1.1.5 release](https://github.com/MaybeSobi/Terchess/releases/tag/v1.1.0), then extract it.
+Download **[Terchess-1.1.5.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.1.5/Terchess-1.1.5.zip)** from the [stable v1.1.5 release](https://github.com/MaybeSobi/Terchess/releases/tag/v1.1.5), then extract it.
 
 - **Windows:** In File Explorer, right-click the ZIP and choose **Extract All…**.
 - **macOS:** Double-click the ZIP in Finder; macOS extracts the folder beside it.
@@ -159,7 +159,7 @@ The `[dev]` extra installs `pytest`; it is not required just to play.
 
 #### Download, extract, and enter the project directory
 
-Download [Terchess-1.1.5.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.1.0/Terchess-1.1.5.zip) from the [stable release page](https://github.com/MaybeSobi/Terchess/releases/tag/v1.1.0). In Finder, double-click the ZIP to extract it. If you saved it to Downloads, open Terminal and enter the extracted project folder:
+Download [Terchess-1.1.5.zip](https://github.com/MaybeSobi/Terchess/releases/download/v1.1.5/Terchess-1.1.5.zip) from the [stable release page](https://github.com/MaybeSobi/Terchess/releases/tag/v1.1.5). In Finder, double-click the ZIP to extract it. If you saved it to Downloads, open Terminal and enter the extracted project folder:
 
 ```bash
 cd "$HOME/Downloads/Terchess-1.1.0"

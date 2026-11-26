@@ -90,18 +90,18 @@ install_packages() {
 
 info "Checking system packages..."
 if command -v apt-get >/dev/null 2>&1; then
+  PACKAGE_MANAGER="apt-get"
   install_packages apt-get update
   install_packages apt-get install -y python3 python3-venv python3-pip curl unzip
-  install_packages apt-get install -y stockfish || warn "Stockfish could not be installed from APT; it can be installed separately."
 elif command -v dnf >/dev/null 2>&1; then
+  PACKAGE_MANAGER="dnf"
   install_packages dnf install -y python3 python3-pip curl unzip
-  install_packages dnf install -y stockfish || warn "Stockfish could not be installed from DNF; it can be installed separately."
 elif command -v pacman >/dev/null 2>&1; then
+  PACKAGE_MANAGER="pacman"
   install_packages pacman -S --needed --noconfirm python python-pip curl unzip
-  install_packages pacman -S --needed --noconfirm stockfish || warn "Stockfish could not be installed from pacman; it can be installed separately."
 elif command -v zypper >/dev/null 2>&1; then
+  PACKAGE_MANAGER="zypper"
   install_packages zypper --non-interactive install python3 python3-pip curl unzip
-  install_packages zypper --non-interactive install stockfish || warn "Stockfish could not be installed from zypper; it can be installed separately."
 else
   echo "Unsupported package manager. Install Python 3.10+, curl, unzip, and Stockfish manually."
   echo "Python: https://www.python.org/downloads/"
@@ -114,102 +114,44 @@ if ! command -v python3 >/dev/null 2>&1 || ! python3 -c 'import sys; raise Syste
   exit 1
 fi
 
-if STOCKFISH_PATH="$(command -v stockfish 2>/dev/null)"; then
-  if python3 - "$STOCKFISH_PATH" "linux" <<'PY'
-import json
-import os
-import re
-import stat
-import subprocess
-import sys
-import tempfile
-from pathlib import Path
+CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+if [[ "$CONFIG_HOME" != /* ]]; then CONFIG_HOME="$HOME/.config"; fi
+CONFIG_PATH="$CONFIG_HOME/terchess/config.json"
+ENGINE_DIR="$HOME/.local/share/terchess-engines"
+STOCKFISH_HELPER="$TMP_DIR/install_stockfish.py"
+STOCKFISH_READY=0
 
-engine_path = str(Path(sys.argv[1]).expanduser().resolve())
-platform_name = sys.argv[2]
-
-try:
-    result = subprocess.run(
-        [engine_path],
-        input="uci\nquit\n",
-        capture_output=True,
-        text=True,
-        timeout=8,
-        check=False,
-    )
-except (OSError, subprocess.SubprocessError) as exc:
-    print(f"Stockfish could not be started: {exc}", file=sys.stderr)
-    raise SystemExit(1)
-
-if result.returncode != 0 or "uciok" not in result.stdout.splitlines():
-    print("Stockfish did not complete a successful UCI handshake.", file=sys.stderr)
-    raise SystemExit(1)
-
-match = re.search(
-    r"(?m)^option name Skill Level type spin default -?\d+ min (-?\d+) max (-?\d+)\s*$",
-    result.stdout,
-)
-if not match:
-    print("The engine does not expose the UCI Skill Level option.", file=sys.stderr)
-    raise SystemExit(1)
-
-minimum, maximum = map(int, match.groups())
-if minimum > 0 or maximum < 20:
-    print(f"The engine supports Skill Level {minimum}–{maximum}, not the full 0–20 range.", file=sys.stderr)
-    raise SystemExit(1)
-
-if platform_name == "macos":
-    config_path = Path.home() / "Library" / "Application Support" / "Terchess" / "config.json"
-else:
-    xdg_home = os.environ.get("XDG_CONFIG_HOME")
-    xdg_path = Path(xdg_home).expanduser() if xdg_home else None
-    config_root = xdg_path if xdg_path and xdg_path.is_absolute() else Path.home() / ".config"
-    config_path = config_root / "terchess" / "config.json"
-
-config = {}
-if config_path.exists():
-    try:
-        with config_path.open("r", encoding="utf-8") as stream:
-            config = json.load(stream)
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        print(f"Existing Terchess settings could not be read ({exc}); they were left unchanged.", file=sys.stderr)
-        raise SystemExit(2)
-    if not isinstance(config, dict):
-        print("Existing Terchess settings are not a JSON object; they were left unchanged.", file=sys.stderr)
-        raise SystemExit(2)
-
-config["stockfish_path"] = engine_path
-config_path.parent.mkdir(parents=True, exist_ok=True)
-mode = stat.S_IMODE(config_path.stat().st_mode) if config_path.exists() else 0o600
-fd, temporary_path = tempfile.mkstemp(
-    prefix=config_path.name + ".",
-    suffix=".tmp",
-    dir=str(config_path.parent),
-)
-try:
-    with os.fdopen(fd, "w", encoding="utf-8") as stream:
-        json.dump(config, stream, indent=2, ensure_ascii=False)
-        stream.write("\n")
-        stream.flush()
-        os.fsync(stream.fileno())
-    os.chmod(temporary_path, mode)
-    os.replace(temporary_path, config_path)
-except OSError:
-    try:
-        os.unlink(temporary_path)
-    except OSError:
-        pass
-    raise
-
-print(f"Validated Stockfish Skill Level 0–20 and saved its path to {config_path}.")
-PY
-  then
-    info "Stockfish supports Terchess Skill Level 0–20; its path was saved."
+info "Installing the latest official stable Stockfish release..."
+if curl -fsSL --retry 2 "https://raw.githubusercontent.com/${REPO}/main/install_stockfish.py" -o "$STOCKFISH_HELPER"; then
+  if python3 "$STOCKFISH_HELPER" --platform linux --install-dir "$ENGINE_DIR" --config-path "$CONFIG_PATH"; then
+    STOCKFISH_READY=1
   else
-    warn "Stockfish failed the Skill Level 0–20 check, or settings could not be updated safely. Its path was not saved."
+    warn "The official Stockfish download or validation failed."
   fi
 else
-  warn "Stockfish was not found on PATH. Install it separately and select its executable in Terchess Settings."
+  warn "Could not download Terchess's Stockfish installer helper."
+fi
+
+if [[ "$STOCKFISH_READY" -ne 1 ]]; then
+  warn "Trying the distribution package as a fallback; it may be older than the official release."
+  if ! command -v stockfish >/dev/null 2>&1 && [[ -f "$STOCKFISH_HELPER" ]]; then
+    case "$PACKAGE_MANAGER" in
+      apt-get) install_packages apt-get install -y stockfish || true ;;
+      dnf) install_packages dnf install -y stockfish || true ;;
+      pacman) install_packages pacman -S --needed --noconfirm stockfish || true ;;
+      zypper) install_packages zypper --non-interactive install stockfish || true ;;
+    esac
+  fi
+
+  if STOCKFISH_PATH="$(command -v stockfish 2>/dev/null)" && [[ -f "$STOCKFISH_HELPER" ]]; then
+    if python3 "$STOCKFISH_HELPER" --validate-existing "$STOCKFISH_PATH" --config-path "$CONFIG_PATH"; then
+      warn "Using the system Stockfish fallback. Its version may be older than the latest official release."
+    else
+      warn "The system Stockfish executable failed Terchess validation. Select a compatible engine in Settings."
+    fi
+  else
+    warn "No compatible Stockfish engine is available. Install the official build manually and select it in Terchess Settings."
+  fi
 fi
 
 info "Finding the latest stable release..."

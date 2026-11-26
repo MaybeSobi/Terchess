@@ -95,10 +95,15 @@ def _board_cell_dimensions(
 
     available_width = max(24, terminal_width - (54 if wide_layout else 12))
     available_rank_height = max(1, (terminal_height - (12 if wide_layout else 18)) // 8)
+    if board_scale == "auto":
+        cell_height = min(3, max(1, (terminal_height - 18) // 8))
+        cell_width = min(7, max(3, available_width // 16), cell_height * 3)
+        return cell_width, cell_height
+
     presets = {
         "compact": (3, 1),
-        "normal": (5, 1),
-        "large": (7, 2),
+        "normal": (4, 2),
+        "large": (6, 3),
     }
     target_width, target_height = presets.get(board_scale, presets["compact"])
     cell_width = min(target_width, max(3, available_width // 8))

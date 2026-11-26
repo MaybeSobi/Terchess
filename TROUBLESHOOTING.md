@@ -64,14 +64,14 @@ python -m pip install .
 
 ## Windows installer does not detect an existing Stockfish build
 
-One-command installers use the official Stockfish 19 release. They select the binary for your OS/CPU, verify GitHub's published SHA-256 digest, perform a UCI handshake, confirm the engine version is exactly Stockfish 19, and require Skill Level 0–20. An older system package (for example, Stockfish 17.1 from Kali repositories) is not accepted; the verified engine is installed in Terchess's per-user data directory and its path is saved without replacing other settings.
+One-command installers query the official Stockfish Releases API and install its latest stable release. They select the binary for your OS/CPU, verify that release asset's published SHA-256 digest, perform a UCI handshake, confirm the engine version matches the release tag, and require Skill Level 0–20. An older system package (for example, Stockfish 17.1 from Kali repositories) is not accepted; the verified engine is installed in Terchess's per-user data directory and its path is saved without replacing other settings.
 
 ## Stockfish cannot be found
 
-Stockfish is a separate executable and is not bundled in the manual Terchess ZIP. The one-command installers download and configure official Stockfish 19.
+Stockfish is a separate executable and is not bundled in the manual Terchess ZIP. The one-command installers download and configure the latest stable official Stockfish release.
 
-- **One-command installer:** rerun the installer; it downloads the matching official Stockfish 19 binary and validates its checksum and UCI version.
-- **Manual installation:** download Stockfish 19 for your OS from the [official website](https://stockfishchess.org/download/) and select its executable in Terchess Settings.
+- **One-command installer:** rerun the installer; it checks GitHub for the latest stable official Stockfish release, downloads the matching binary, and validates its checksum and UCI version.
+- **Manual installation:** download the latest stable official Stockfish build for your OS from the [official website](https://stockfishchess.org/download/) and select its executable in Terchess Settings.
 - **Kali/Linux:** the distro package may be older (such as 17.1); the one-command installer deliberately does not use it as the final engine.
 
 ## Tests cannot import `terchess`, `chess`, or other dependencies

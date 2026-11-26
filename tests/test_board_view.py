@@ -90,8 +90,11 @@ def test_compact_piece_symbols_remain_centered() -> None:
             assert lines[0].strip() == piece.unicode_symbol()
 
 
-def test_larger_board_sizes_render_scalable_braille_piece_art() -> None:
-    from terchess.board_view import _piece_cell_lines
+def test_larger_board_sizes_render_solid_block_piece_art() -> None:
+    from terchess.board_view import _BLOCK_GLYPHS, _PIECE_MASKS, _piece_cell_lines
+
+    allowed_glyphs = set(_BLOCK_GLYPHS.values())
+    assert all(len(mask) == 16 and all(len(row) == 16 for row in mask) for mask in _PIECE_MASKS.values())
 
     for color in (chess.WHITE, chess.BLACK):
         for piece_type in (
@@ -103,38 +106,58 @@ def test_larger_board_sizes_render_scalable_braille_piece_art() -> None:
                 lines = _piece_cell_lines(piece, width, height)
                 assert len(lines) == height
                 assert all(len(line) == width for line in lines)
-                assert all(
-                    all(0x2800 <= ord(char) <= 0x28FF for char in line)
-                    for line in lines
-                )
+                assert any(char != " " for line in lines for char in line)
+                assert all(char in allowed_glyphs for line in lines for char in line)
 
 
-def test_piece_art_uses_more_terminal_pixels_at_larger_sizes() -> None:
+def test_piece_art_scales_with_board_size() -> None:
     from terchess.board_view import _piece_cell_lines
 
     piece = chess.Piece(chess.QUEEN, chess.WHITE)
-    compact_art = "".join(_piece_cell_lines(piece, 4, 2))
-    large_art = "".join(_piece_cell_lines(piece, 8, 4))
+    compact = _piece_cell_lines(piece, 4, 2)
+    normal = _piece_cell_lines(piece, 6, 3)
+    large = _piece_cell_lines(piece, 8, 4)
 
-    assert len(large_art) > len(compact_art)
-    assert compact_art != large_art
+    assert len("".join(large)) > len("".join(normal)) > len("".join(compact))
+    assert compact != normal
+    assert normal != large
 
 
-def test_white_and_black_piece_colors_preserve_each_square_background() -> None:
-    from terchess.board_view import LIGHT_SQUARE, DARK_SQUARE, _piece_colors
+def test_piece_foreground_colors_are_consistent_on_every_square() -> None:
+    from terchess.board_view import (
+        BLACK_PIECE, DARK_SQUARE, LAST_MOVE_SQUARE, LIGHT_SQUARE,
+        WHITE_PIECE, _piece_colors,
+    )
 
-    black_foregrounds = set()
-    for background in (LIGHT_SQUARE, DARK_SQUARE):
+    for background in (LIGHT_SQUARE, DARK_SQUARE, LAST_MOVE_SQUARE):
         white = _piece_colors(chess.Piece(chess.QUEEN, chess.WHITE), background)
         black = _piece_colors(chess.Piece(chess.QUEEN, chess.BLACK), background)
-        black_foregrounds.add(black[0])
-        assert white[0] != black[0]
-        assert white[1] == black[1] == background
 
-    # Black pieces use the same dark ink on light and dark squares, rather
-    # than alternating between black and pale foregrounds across a rank.
-    assert black_foregrounds == {"#171717"}
+        assert white == (WHITE_PIECE, background)
+        assert black == (BLACK_PIECE, background)
 
+
+def test_both_piece_colors_remain_readable_on_all_square_colors() -> None:
+    from terchess.board_view import (
+        BLACK_PIECE, DARK_SQUARE, LAST_MOVE_SQUARE, LIGHT_SQUARE, WHITE_PIECE,
+    )
+
+    def luminance(hex_color: str) -> float:
+        channels = [
+            int(hex_color[index:index + 2], 16) / 255
+            for index in (1, 3, 5)
+        ]
+        linear = [
+            value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4
+            for value in channels
+        ]
+        return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+    for foreground in (WHITE_PIECE, BLACK_PIECE):
+        for background in (LIGHT_SQUARE, DARK_SQUARE, LAST_MOVE_SQUARE):
+            lighter, darker = sorted((luminance(foreground), luminance(background)), reverse=True)
+            contrast = (lighter + 0.05) / (darker + 0.05)
+            assert contrast >= 3.0
 
 def test_terminal_redraw_explicitly_clears_and_homes_the_viewport() -> None:
     from io import StringIO

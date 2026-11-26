@@ -204,3 +204,16 @@ def test_prompt_update_strategy_can_defer_an_update(monkeypatch):
         [{"path": "/usr/games/stockfish", "version": "17"}],
         "19",
     ) == "keep"
+
+
+
+def test_same_version_ignores_trailing_zero_components():
+    assert installer.same_version("19.0", "19")
+    assert installer.same_version("19.0.0", "19")
+    assert not installer.same_version("19.1", "19")
+
+
+def test_candidate_name_accepts_common_platform_build_names():
+    assert installer._candidate_name("stockfish-windows-x86-64-avx2.exe")
+    assert installer._candidate_name("stockfish_17.1")
+    assert not installer._candidate_name("stockfish-17.1.tar.gz")

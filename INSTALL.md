@@ -301,7 +301,7 @@ With the virtual environment active, run:
 python -m pytest
 ```
 
-The stable `v1.1.5` release includes local SQLite game history, PGN import/export and replay, Hotseat multiplayer, offline ECO opening recognition, and lazy Stockfish startup. The one-command installers also register the `terchess` terminal command on Windows, macOS, Linux, and Android via Termux. GitHub Actions tests Python 3.10–3.13 on Windows, macOS, and Linux; the Termux installer is syntax-checked in CI, while Android runtime compatibility is validated on-device. The [release checklist](RELEASE_CHECKLIST.md) remains useful when testing future changes.
+The stable `v1.1.5` release includes adaptive chessboard sizing for regular terminal play, local SQLite game history, PGN import/export and replay, Hotseat multiplayer, offline ECO opening recognition, and lazy Stockfish startup. One-command installers register the `terchess` terminal command on Windows, macOS, Linux, and Android via Termux, and now select the latest stable official Stockfish release automatically. GitHub Actions tests Python 3.10–3.13 on Windows, macOS, and Linux; the Termux installer is syntax-checked in CI, while Android runtime compatibility is validated on-device. The [release checklist](RELEASE_CHECKLIST.md) remains useful when testing future changes.
 
 ## Roadmap
 

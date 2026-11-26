@@ -244,7 +244,7 @@ def settings_menu(
             "  1 · Stockfish difficulty\n"
             "  2 · Play as White or Black\n"
             "  3 · Time control\n"
-            "  4 · Board size (compact / normal / large)\n"
+            "  4 · Board size (auto / compact / normal / large)\n"
             "  5 · Back to main menu"
         )
         choice = Prompt.ask("Select setting", choices=["1", "2", "3", "4", "5"], default="5")

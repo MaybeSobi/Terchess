@@ -2,6 +2,14 @@
 
 All notable changes to Terchess are documented here.
 
+## [1.1.5] — 2026-11-26
+
+- Make the regular chessboard responsive to terminal width and height instead of locking every square to three characters.
+- Let the desktop two-column layout and board panel expand across the available terminal width, while keeping the information sidebar readable.
+- Render larger chess squares across multiple terminal rows on spacious screens and automatically reduce their size on short terminals.
+- Preserve the compact portrait-first Termux board.
+- Update one-command installers to resolve the latest stable official Stockfish release automatically, with release-specific SHA-256 and UCI version validation.
+
 ## [Unreleased]
 
 - Add a compact portrait-first Termux game screen with a borderless board, inline clocks, and a short recent-move list.

@@ -215,5 +215,8 @@ def test_same_version_ignores_trailing_zero_components():
 
 def test_candidate_name_accepts_common_platform_build_names():
     assert installer._candidate_name("stockfish-windows-x86-64-avx2.exe")
-    assert installer._candidate_name("stockfish_17.1")
+    if installer.os.name != "nt":
+        assert installer._candidate_name("stockfish_17.1")
+    else:
+        assert installer._candidate_name("stockfish_17.1.exe")
     assert not installer._candidate_name("stockfish-17.1.tar.gz")

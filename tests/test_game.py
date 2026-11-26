@@ -82,3 +82,61 @@ def test_text_only_renderer_displays_moves_without_chessboard_symbols():
     assert "e4" in rendered and "e5" in rendered
     for piece in "♔♕♖♗♘♙♚♛♜♞♟":
         assert piece not in rendered
+
+def test_clocked_prompt_redraws_after_terminal_resize_and_keeps_typed_move(monkeypatch):
+    import asyncio
+    import os
+    from types import SimpleNamespace
+
+    import terchess.game as game
+
+    sizes = iter([
+        os.terminal_size((80, 24)),
+        os.terminal_size((110, 32)),
+        os.terminal_size((110, 32)),
+    ])
+
+    def fake_terminal_size(fallback=(80, 24)):
+        try:
+            return next(sizes)
+        except StopIteration:
+            return os.terminal_size((110, 32))
+
+    class FakeSession:
+        def __init__(self):
+            self.calls = 0
+            self.default_buffer = SimpleNamespace(text="d2d4")
+
+        async def prompt_async(self, message, default="", **kwargs):
+            self.calls += 1
+            if self.calls == 1:
+                await asyncio.Event().wait()
+            return default
+
+    monkeypatch.setattr(game.shutil, "get_terminal_size", fake_terminal_size)
+    monkeypatch.setattr(game, "is_termux", lambda: False)
+    session = FakeSession()
+    resize_calls = []
+    clock = SimpleNamespace(is_flagged=lambda color: False)
+
+    result = asyncio.run(game._clocked_prompt(
+        session,
+        clock,
+        chess.WHITE,
+        on_resize=lambda: resize_calls.append(True),
+    ))
+
+    assert result == "d2d4"
+    assert session.calls == 2
+    assert resize_calls == [True]
+
+
+def test_board_size_setting_is_saved_and_loaded():
+    from terchess.cli import GameSettings, _settings_config, _settings_from_config
+
+    settings = GameSettings(board_scale="large")
+    saved = _settings_config(settings, stockfish_path=None)
+    restored = _settings_from_config(saved)
+
+    assert restored.board_scale == "large"
+\n

@@ -46,7 +46,7 @@ Choose the way you want to think about chess. Switch display modes in the app.
 - **Cross-platform terminal UI** — including a compact, portrait-friendly layout for Android via Termux.
 - **Offline after setup** — gameplay and opening recognition do not require a network connection.
 
-Stockfish is optional for Hotseat, game history, PGN tools, and opening lookup. The engine is distributed separately; Terchess does not bundle it.
+Stockfish is optional for Hotseat, game history, PGN tools, and opening lookup. The engine is distributed separately from the Terchess app archive; one-command installers download and verify the latest stable official build for your platform. Manual ZIP installs require a separate Stockfish download.
 
 ## Installation
 
@@ -101,8 +101,8 @@ See **[INSTALL.md](INSTALL.md)** for complete platform-specific instructions, St
 
 ## Quick start
 
-1. Install Terchess using the command for your platform.
-2. Install Stockfish separately if you want to play against the computer.
+1. Install Terchess using the command for your platform; the one-command installer also downloads and verifies the latest stable official Stockfish build.
+2. For manual ZIP installs, download Stockfish separately if you want to play against the computer.
 3. Run `terchess`.
 4. Choose **Play vs Stockfish**, **Hotseat**, or **Game History**.
 5. Switch between Board View and Blindfold mode from the main menu.

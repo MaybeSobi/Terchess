@@ -64,15 +64,13 @@ python -m pip install .
 
 ## Windows installer does not detect an existing Stockfish build
 
-The PowerShell installer checks Stockfish on PATH, common install locations, and executable files under `C:\\Engines`. A candidate is accepted only if it completes a UCI handshake and advertises a `Skill Level` spin option covering the full 0–20 range. Its path is merged into `%APPDATA%\\Terchess\\config.json` without replacing other preferences. Invalid or non-object JSON is left unchanged. Linux and macOS installers apply the same UCI/Skill Level check to `stockfish` found on PATH. If your engine is in a different folder, add that folder to PATH or select the executable when Terchess asks for it.
+One-command installers first download the latest stable official Stockfish release using `install_stockfish.py`. The helper selects a binary for your OS/CPU, verifies its official SHA-256 digest, checks the UCI engine identity and Skill Level 0–20, and saves the managed engine path in Terchess settings. If the official download is unavailable, the installer may fall back to a system package (APT/DNF/Pacman/Zypper, Homebrew, WinGet, or Termux `pkg`). A fallback can be older than the latest official release; the installer prints a warning and validates its UCI options before saving it. Windows also checks PATH and common folders such as `C:\\Engines`. Existing settings are preserved.
 
 ## Stockfish cannot be found
 
-Stockfish is a separate executable and is not bundled in the Terchess ZIP.
+Stockfish is distributed separately from the Terchess application ZIP. The one-command installers download the latest stable official release automatically. When using a manual ZIP installation, install a build from the [official website](https://stockfishchess.org/download/) and select its executable in Terchess Settings.
 
-- **Kali/Linux:** try `sudo apt install stockfish`, then check `command -v stockfish`.
-- **Windows:** download and extract Stockfish from the [official website](https://stockfishchess.org/download/), then enter or select the full path to its `.exe` in Terchess.
-- **macOS:** if Homebrew is available for your Mac, run `brew install stockfish` and check with `command -v stockfish`. Otherwise download the macOS build from the [official website](https://stockfishchess.org/download/) and select its executable in Terchess.
+If a one-command installer reports that the official download failed, check your internet connection and retry. It may use a system package as a fallback; that package can be older. The installer prints a warning when it uses that fallback. Check the saved engine path in `~/.config/terchess/config.json` on Linux, `%APPDATA%\\Terchess\\config.json` on Windows, or `~/Library/Application Support/Terchess/config.json` on macOS.
 
 ## Tests cannot import `terchess`, `chess`, or other dependencies
 

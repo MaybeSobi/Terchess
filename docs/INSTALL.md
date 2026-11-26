@@ -2,7 +2,7 @@
 
 This guide covers installation, first launch, platform-specific setup, Stockfish configuration, game history, controls, and testing.
 
-For a quick overview of Terchess, see the [README](README.md).
+For a quick overview of Terchess, see the [README](../README.md).
 
 ---
 
@@ -40,7 +40,7 @@ The Termux installer uses `pkg` for Python, installs the app from the current `m
 
 Before downloading an engine, the installers search Terchess settings, PATH, standard system locations, common manual-install folders, and user Downloads folders for existing Stockfish binaries. They identify each candidate with a UCI handshake and check that `Skill Level` supports 0–20. If the newest stable official version is already present, it is reused without another engine download. If an older version is found, choose to switch Terchess to the latest engine, install the latest alongside the existing copy, or defer the update. Side-by-side installations are kept in separate versioned folders and registered in the user settings; when more than one engine is retained, Terchess asks which one to use at startup. Selecting **Remember my choice** stores the preferred engine; run `terchess --choose-engine` to show the selector again. New downloads still use the official release asset, verify its published SHA-256 digest, and validate the exact UCI version. Windows installs Python through WinGet when available; Linux and Termux use their package managers for Python, while macOS uses Homebrew.
 
-**Security note:** these commands download and run an installer from this repository. If you prefer to inspect it first, open [install.ps1](install.ps1), [install-macos.sh](install-macos.sh), [install-linux.sh](install-linux.sh), or [install-termux.sh](install-termux.sh) and review the script before running it.
+**Security note:** these commands download and run an installer from this repository. If you prefer to inspect it first, open [install.ps1](../installers/install.ps1), [install-macos.sh](../installers/install-macos.sh), [install-linux.sh](../installers/install-linux.sh), or [install-termux.sh](../installers/install-termux.sh) and review the script before running it.
 
 After installation, launch Terchess directly from your terminal:
 

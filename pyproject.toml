@@ -39,7 +39,7 @@ dev = ["pytest>=8.0"]
 Homepage = "https://github.com/MaybeSobi/Terchess"
 Repository = "https://github.com/MaybeSobi/Terchess"
 Issues = "https://github.com/MaybeSobi/Terchess/issues"
-Changelog = "https://github.com/MaybeSobi/Terchess/blob/main/CHANGELOG.md"
+Changelog = "https://github.com/MaybeSobi/Terchess/blob/main/docs/CHANGELOG.md"
 
 [project.scripts]
 terchess = "terchess.cli:main"

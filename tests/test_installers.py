@@ -4,7 +4,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def read_installer(name: str) -> str:
-    return (ROOT / name).read_text(encoding="utf-8")
+    return (ROOT / "installers" / name).read_text(encoding="utf-8")
 
 
 def test_windows_installer_defaults_to_current_main_branch():

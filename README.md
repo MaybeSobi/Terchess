@@ -59,22 +59,22 @@ Choose your platform and run the matching command:
 
 **Windows — PowerShell**
 ```powershell
-irm https://raw.githubusercontent.com/MaybeSobi/Terchess/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/MaybeSobi/Terchess/main/installers/install.ps1 | iex
 ```
 
 **macOS — Terminal**
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/install-macos.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/installers/install-macos.sh)
 ```
 
 **Linux — Terminal**
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/install-linux.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/installers/install-linux.sh)
 ```
 
 **Android — Termux**
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/install-termux.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/installers/install-termux.sh)
 ```
 
 After installation, launch Terchess from any terminal:
@@ -103,7 +103,7 @@ python -m pip install .
 terchess
 ```
 
-See **[INSTALL.md](INSTALL.md)** for complete platform-specific instructions, Stockfish setup, launchers, and troubleshooting.
+See **[Installation guide](docs/INSTALL.md)** for complete platform-specific instructions, Stockfish setup, launchers, and troubleshooting.
 
 ## Quick start
 
@@ -141,7 +141,7 @@ Useful in-game commands:
 
 ## Roadmap
 
-See **[ROADMAP.md](ROADMAP.md)** for planned features and project direction.
+See **[ROADMAP.md](docs/ROADMAP.md)** for planned features and project direction.
 
 ## Contributing
 
@@ -153,7 +153,7 @@ Please see [SECURITY.md](SECURITY.md) for reporting security issues.
 
 ## License
 
-Terchess is distributed under **GPL-3.0-or-later**. See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for license and dependency notes.
+Terchess is distributed under **GPL-3.0-or-later**. See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](docs/THIRD_PARTY_NOTICES.md) for license and dependency notes.
 
 <div align="center">
 

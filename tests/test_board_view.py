@@ -76,7 +76,7 @@ def test_wide_layout_uses_the_available_terminal_width() -> None:
     rendered_lines = console.export_text().splitlines()
     assert max(map(len, rendered_lines)) >= 110
 
-def test_piece_symbols_are_centered_at_every_board_size() -> None:
+def test_compact_piece_symbols_remain_centered() -> None:
     from terchess.board_view import _piece_cell_lines
 
     for color in (chess.WHITE, chess.BLACK):
@@ -85,15 +85,38 @@ def test_piece_symbols_are_centered_at_every_board_size() -> None:
             chess.ROOK, chess.QUEEN, chess.KING,
         ):
             piece = chess.Piece(piece_type, color)
-            for width, height in ((2, 1), (4, 2), (6, 3), (8, 4)):
+            lines = _piece_cell_lines(piece, 2, 1)
+            assert lines == [piece.unicode_symbol()]
+
+
+def test_larger_board_sizes_render_scalable_braille_piece_art() -> None:
+    from terchess.board_view import _piece_cell_lines
+
+    for color in (chess.WHITE, chess.BLACK):
+        for piece_type in (
+            chess.PAWN, chess.KNIGHT, chess.BISHOP,
+            chess.ROOK, chess.QUEEN, chess.KING,
+        ):
+            piece = chess.Piece(piece_type, color)
+            for width, height in ((4, 2), (6, 3), (8, 4)):
                 lines = _piece_cell_lines(piece, width, height)
                 assert len(lines) == height
-                assert lines[height // 2].strip() == piece.unicode_symbol()
+                assert all(len(line) == width for line in lines)
                 assert all(
-                    line == " " * width
-                    for row, line in enumerate(lines)
-                    if row != height // 2
+                    all(0x2800 <= ord(char) <= 0x28FF for char in line)
+                    for line in lines
                 )
+
+
+def test_piece_art_uses_more_terminal_pixels_at_larger_sizes() -> None:
+    from terchess.board_view import _piece_cell_lines
+
+    piece = chess.Piece(chess.QUEEN, chess.WHITE)
+    compact_art = "".join(_piece_cell_lines(piece, 4, 2))
+    large_art = "".join(_piece_cell_lines(piece, 8, 4))
+
+    assert len(large_art) > len(compact_art)
+    assert compact_art != large_art
 
 
 def test_white_and_black_piece_colors_preserve_each_square_background() -> None:

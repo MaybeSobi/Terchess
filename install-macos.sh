@@ -103,7 +103,7 @@ fi
 
 info "Installing/checking Python with Homebrew..."
 brew install python || warn "Homebrew reported a Python install issue; checking whether Python is available."
-info "Installing/checking Stockfish with Homebrew..."
+info "Checking local Stockfish installations..."
 
 if ! command -v python3 >/dev/null 2>&1 || ! python3 -c 'import sys; raise SystemExit(0 if sys.version_info >= (3,10) else 1)'; then
   echo "Python 3.10+ is required. Install it from https://www.python.org/downloads/macos/ and rerun."

@@ -1,7 +1,5 @@
 <div align="center">
 
-<table align="center" cellpadding="10" bgcolor="#ffffff"><tr><td align="center"><img src="assets/terchess-logo-lockup.png" alt="Terchess logo" width="260"></td></tr></table>
-
 ### Terminal + Chess
 
 **Your terminal. Your board. Your imagination.**

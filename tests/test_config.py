@@ -21,6 +21,7 @@ def test_preferences_round_trip(tmp_path):
         "human_color": "black",
         "time_control_key": "2",
         "show_board": False,
+        "board_scale": "large",
     }
     saved_path = save_config(original, path)
     loaded = load_config(path)
@@ -32,6 +33,7 @@ def test_preferences_round_trip(tmp_path):
     assert loaded["human_color"] == "black"
     assert loaded["time_control_key"] == "2"
     assert loaded["show_board"] is False
+    assert loaded["board_scale"] == "large"
     assert loaded["schema_version"] == 1
     assert not path.with_name(path.name + ".tmp").exists()
 
@@ -44,6 +46,7 @@ def test_invalid_values_fall_back_to_safe_defaults(tmp_path):
         "human_color": ["white"],
         "time_control_key": "999",
         "show_board": "no",
+        "board_scale": "giant",
     }), encoding="utf-8")
     config = load_config(path)
     assert config["stockfish_path"] is None
@@ -51,6 +54,7 @@ def test_invalid_values_fall_back_to_safe_defaults(tmp_path):
     assert config["human_color"] == "white"
     assert config["time_control_key"] == "3"
     assert config["show_board"] is True
+    assert config["board_scale"] == "compact"
 
 
 def test_corrupt_config_does_not_crash(tmp_path):

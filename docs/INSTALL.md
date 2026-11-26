@@ -15,25 +15,25 @@ Run the command for your operating system. The installer downloads the latest st
 **Windows — PowerShell:**
 
 ```powershell
-irm https://raw.githubusercontent.com/MaybeSobi/Terchess/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/MaybeSobi/Terchess/main/installers/install.ps1 | iex
 ```
 
 **macOS — Terminal** (requires Homebrew for automatic Python installation; the latest stable Stockfish release is downloaded from the official GitHub release):
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/install-macos.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/installers/install-macos.sh)
 ```
 
 **Linux — Terminal** (supports APT, DNF, pacman, and zypper; package installation may ask for your sudo password):
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/install-linux.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/installers/install-linux.sh)
 ```
 
 **Android — Termux** (native ARM/ARM64 environment; no root, sudo, Ubuntu, or Kali required):
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/install-termux.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/MaybeSobi/Terchess/main/installers/install-termux.sh)
 ```
 
 The Termux installer uses `pkg` for Python, installs the app from the current `main` branch, creates a private Python environment, downloads the latest stable official Stockfish Android binary, verifies its SHA-256 digest and reported version, and registers `terchess` in Termux's `$PREFIX/bin`. Use this installer inside Termux; **do not use `install-linux.sh` on Android/Termux**, because the Linux installer expects a conventional distribution package manager and may request root privileges.

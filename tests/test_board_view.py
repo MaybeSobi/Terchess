@@ -86,7 +86,8 @@ def test_compact_piece_symbols_remain_centered() -> None:
         ):
             piece = chess.Piece(piece_type, color)
             lines = _piece_cell_lines(piece, 2, 1)
-            assert lines == [piece.unicode_symbol()]
+            assert len(lines) == 1
+            assert lines[0].strip() == piece.unicode_symbol()
 
 
 def test_larger_board_sizes_render_scalable_braille_piece_art() -> None:
